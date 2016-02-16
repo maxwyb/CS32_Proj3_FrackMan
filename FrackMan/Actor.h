@@ -5,4 +5,152 @@
 
 // Students:  Add code to this file, Actor.cpp, StudentWorld.h, and StudentWorld.cpp
 
+/*
+ GraphObject(int imageID, int startX, int startY, DIRECTION startDirection, float size = 1.0, unsigned int depth = 0) {
+ public:
+	void setVisible(bool shouldIDisplay);
+	void getX() const;
+	void getY() const;
+	void moveTo(int x, int y);
+	DIRECTION getDirection() const; // Directions: up, down, left, right void
+	setDirection(DIRECTION d); // Directions: up, down, left, right
+ }
+ */
+
+
+class StudentWorld;
+
+
+class Actor : public GraphObject {
+public:
+    Actor(StudentWorld* world, int imageID, int startX, int startY, Direction dir, double size, unsigned int depth);
+    StudentWorld* getWorld();
+    bool isDead();
+    void setDead();
+    virtual void doSomething() = 0;
+    
+private:
+    StudentWorld* m_world;
+    bool m_isAlive;
+};
+
+
+class FrackMan : public Actor {
+public:
+    FrackMan(StudentWorld* world);
+    void doSomething();
+    void getAnnoyed(int num);
+    
+private:
+    
+};
+
+
+class Protester {
+public:
+    virtual void receiveGold();
+    virtual void shout();
+    
+private:
+    int hit_points;
+    
+    int num_to_move_in_direction; // numSquaresToMoveInCurrentDirection
+    bool leavingOilField;
+    int moving_period;
+    int ticks; // total ticks undergone
+};
+
+
+class RegularProtester : public Protester {
+public:
+    
+private:
+    
+};
+
+
+class HardcoreProtester : public Protester {
+public:
+    
+private:
+    
+};
+
+
+class Goodies : public GraphObject {
+public:
+    void pickItUp();
+    
+private:
+    int pickup_able; // 0 for pickup-able by FrackMan, 1 for pickup-able by Protesters, 2 for both
+    int ticks_existing; // already existing for how many ticks; -1 for permanent state
+};
+
+
+class SonarKits : public Goodies {
+public:
+    
+private:
+    
+};
+
+
+class GoldNugget : public Goodies {
+public:
+    GoldNugget(int state);
+    
+private:
+    
+};
+
+
+class Water : public Goodies {
+public:
+    
+private:
+
+};
+
+
+class Barrel : public Goodies {
+public:
+    
+private:
+    
+};
+
+
+class Boulder : public GraphObject {
+public:
+    bool isAlive();
+    virtual void doSomething() {
+        // if in stable state
+        // if in waiting state
+        // if in falling state
+        // if in dead state
+    }
+    
+private:
+    int m_state; // 0 for stable, 1 for waiting, 2 for falling, -1 for dead
+    
+};
+
+
+class Dirt : public GraphObject {
+public:
+    int distance();
+    
+private:
+    int m_distance;
+};
+
+
+class Squirts {
+public:
+    
+private:
+    
+};
+
+
 #endif // ACTOR_H_
