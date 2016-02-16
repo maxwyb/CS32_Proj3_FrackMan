@@ -36,6 +36,18 @@ public:
 	virtual int init()
 	{
         m_player = new FrackMan(this);
+        
+        for (int i = 0; i < 64; i++) {
+            for (int j = 0; j < 64; j++) {
+                if ((i >= 30 && i <= 33 && j>= 4 && j<=59) || j > 59) {
+                    m_dirt[i][j] = nullptr;
+                    continue;
+                }
+                
+                m_dirt[i][j] = new Dirt(this, i, j);
+            }
+        }
+        
 		return GWSTATUS_CONTINUE_GAME;
 	}
 
@@ -43,7 +55,10 @@ public:
 	{
 		  // This code is here merely to allow the game to build, run, and terminate after you hit enter a few times.
 		  // Notice that the return value GWSTATUS_PLAYER_DIED will cause our framework to end the current level.
+        
 		//decLives();
+        m_player->doSomething();
+        
 		return GWSTATUS_CONTINUE_GAME;
  	}
 
@@ -68,6 +83,11 @@ public:
     void changeGold(int num) { m_gold += num; }
     
     void changeOilLeft(int num) { m_oilLeft += num; }
+    
+    
+    Dirt* getDirt(int x, int y) { return m_dirt[x][y]; }
+    
+    void setDirt(Dirt* dirt, int x, int y) { m_dirt[x][y] = dirt; }
 
 private:
     int m_HP; // hit_points of FrackMan
@@ -76,7 +96,7 @@ private:
     int m_gold; // gold_nugget
     int m_oilLeft; // remained barrels of oil
     
-    char m_dirt[64][64]; // map of Dirt
+    Dirt* m_dirt[64][64]; // map of Dirt
     
     std::vector<Actor*> m_actors;
     FrackMan* m_player;
