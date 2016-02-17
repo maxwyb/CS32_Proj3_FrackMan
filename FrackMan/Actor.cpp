@@ -13,6 +13,10 @@ Actor::Actor(StudentWorld* world, int imageID, int startX, int startY, Direction
     m_isAlive = true;
 }
 
+Actor::~Actor() {
+    
+}
+
 StudentWorld* Actor::getWorld() {
     return m_world;
 }
@@ -35,9 +39,15 @@ FrackMan::FrackMan(StudentWorld* world) : Actor(world, IID_PLAYER, 30, 60, right
     setVisible(true);
 }
 
+FrackMan::~FrackMan() {
+    setVisible(false);
+}
+
 void FrackMan::doSomething() {
-    if (!isAlive())
+    if (!isAlive()) {
+        getWorld()->decLives();
         return;
+    }
     
     cerr << "Current X = " << getX() << " ; current Y = " << getY() << "." << endl;
     for (int i = getX(); i <= getX()+ 3; i++) {
@@ -45,44 +55,64 @@ void FrackMan::doSomething() {
             if (i < 64 && j < 64 && getWorld()->getDirt(i, j) != nullptr) {
                 getWorld()->getDirt(i, j)->destroy();
                 getWorld()->setDirt(nullptr, i, j);
+                getWorld()->playSound(SOUND_DIG);
             }
         }
     }
     
     int keyboard = 0;
-    getWorld()->getKey(keyboard);
-    //cerr << "Getting keyboard stroke..." << endl;
-    switch (keyboard) {
-        case KEY_PRESS_LEFT:
-            if (getX()-1 >= 0) {
-                moveTo(getX() - 1, getY());
-                setDirection(left);
-                //cerr << "LEFT arrow key pressed." << endl;
-            }
-            break;
-        case KEY_PRESS_RIGHT:
-            if (getX()+1 < 64) {
-                moveTo(getX() + 1, getY());
-                setDirection(right);
-                //cerr << "RIGHT arrow key pressed." << endl;
-            }
-            break;
-        case KEY_PRESS_UP:
-            if (getY()+1 < 64) {
-                moveTo(getX(), getY() + 1);
-                setDirection(up);
-                //cerr << "UP arrow key pressed." << endl;
-            }
-            break;
-        case KEY_PRESS_DOWN:
-            if (getY()-1 >= 0) {
-                moveTo(getX(), getY() - 1);
-                setDirection(down);
-                //cerr << "DOWN arrow key pressed." << endl;
-            }
-            break;
-//        default:
-            //cerr << "NO direction key pressed." << endl;
+    if (getWorld()->getKey(keyboard) == true)
+        //cerr << "Getting keyboard stroke..." << endl;
+        switch (keyboard) {
+            case KEY_PRESS_ESCAPE:
+                cerr << "ESCAPE key pressed" << endl;
+                getWorld()->setHP(0);
+                setDead();
+                return;
+            
+            case KEY_PRESS_SPACE:
+                getWorld()->changeWater(-1);
+                getWorld()->playSound(SOUND_PLAYER_SQUIRT);
+                break;
+            
+            case KEY_PRESS_LEFT:
+                if (getDirection() != left)
+                    setDirection(left);
+                else if (getX()-1 >= 0) {
+                    moveTo(getX() - 1, getY());
+                    //cerr << "LEFT arrow key pressed." << endl;
+                }
+                break;
+            
+            case KEY_PRESS_RIGHT:
+                if (getDirection() != right)
+                    setDirection(right);
+                else if (getX()+1 < 64) {
+                    moveTo(getX() + 1, getY());
+                    //cerr << "RIGHT arrow key pressed." << endl;
+                }
+                break;
+            
+            case KEY_PRESS_UP:
+                if (getDirection() != up)
+                    setDirection(up);
+                else if (getY()+1 < 64) {
+                    moveTo(getX(), getY() + 1);
+                    //cerr << "UP arrow key pressed." << endl;
+                }
+                break;
+            
+            case KEY_PRESS_DOWN:
+                if (getDirection() != down)
+                    setDirection(down);
+                else if (getY()-1 >= 0) {
+                    moveTo(getX(), getY() - 1);
+                    //cerr << "DOWN arrow key pressed." << endl;
+                }
+                break;
+            
+            //default:
+                //cerr << "NO direction key pressed." << endl;
         
     }
     
@@ -91,6 +121,10 @@ void FrackMan::doSomething() {
 // *** Dirt *** //
 Dirt::Dirt(StudentWorld* world, int x, int y) : Actor(world, IID_DIRT, x, y, right, 0.25, 3) {
     setVisible(true);
+}
+
+Dirt::~Dirt() {
+    setVisible(false);
 }
 
 void Dirt::doSomething() {

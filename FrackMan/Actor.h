@@ -24,6 +24,8 @@ class StudentWorld;
 class Actor : public GraphObject {
 public:
     Actor(StudentWorld* world, int imageID, int startX, int startY, Direction dir, double size, unsigned int depth);
+    virtual ~Actor();
+    
     StudentWorld* getWorld();
     bool isAlive();
     void setDead();
@@ -38,6 +40,8 @@ private:
 class FrackMan : public Actor {
 public:
     FrackMan(StudentWorld* world);
+    virtual ~FrackMan();
+    
     virtual void doSomething();
     void getAnnoyed(int num);
     
@@ -139,12 +143,13 @@ private:
 class Dirt : public Actor {
 public:
     Dirt(StudentWorld* world, int x, int y);
+    virtual ~Dirt();
+    
     virtual void doSomething();
     void destroy();
-    //int distance();
     
 private:
-    //int m_distance;
+
 };
 
 
