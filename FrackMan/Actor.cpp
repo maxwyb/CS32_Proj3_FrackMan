@@ -10,6 +10,17 @@ double distance(int x1, int y1, int x2, int y2) {
     return sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2));
 }
 
+bool didCollide(int x1, int y1, int x2, int y2) { // check if two 2*2 objects collide
+    for (int i1 = 0; i1 < 2; i1++)
+        for (int j1 = 0; j1 < 2; j1++)
+            for (int i2 = 0; i2 < 2; i2++)
+                for (int j2 = 0; j2 < 2; j2++) {
+                    if (x1+i1 == x2+i2 && y1+j1 == y2+j2)
+                        return true;
+                }
+    return false;
+}
+
 // *** Actor *** //
 
 Actor::Actor(StudentWorld* world, int imageID, int startX, int startY, Direction dir, double size, unsigned int depth) : GraphObject(imageID, startX, startY, dir, size, depth) {
@@ -58,7 +69,7 @@ void FrackMan::doSomething() {
     }
     
     // dig the Dirt
-    cerr << "Current X = " << getX() << " ; current Y = " << getY() << "." << endl;
+//    cerr << "Current X = " << getX() << " ; current Y = " << getY() << "." << endl;
     for (int i = getX(); i <= getX()+ 3; i++) {
         for (int j = getY(); j <= getY() + 3; j++) {
             if (i < 64 && j < 64 && getWorld()->getDirt(i, j) != nullptr) {
@@ -76,61 +87,85 @@ void FrackMan::doSomething() {
         int wantMoveX = -1, wantMoveY = -1;
         bool willMove = true;
         
-        switch (keyboard) {
-            case KEY_PRESS_ESCAPE:
-                cerr << "ESCAPE key pressed" << endl;
-                getWorld()->setHP(0);
-                setDead();
-                return;
+        if (keyboard == KEY_PRESS_ESCAPE) {
             
-            case KEY_PRESS_SPACE:
+            cerr << "ESCAPE key pressed" << endl;
+            getWorld()->setHP(0);
+            setDead();
+            return;
+            
+        } else if (keyboard == KEY_PRESS_SPACE) {
+            
+            if (getWorld()->getWater() > 0) {
+                
                 getWorld()->changeWater(-1);
                 getWorld()->playSound(SOUND_PLAYER_SQUIRT);
-                break;
             
-            case KEY_PRESS_LEFT:
-                if (getDirection() != left)
-                    setDirection(left);
-                else if (getX()-1 >= 0) {
-                    wantMoveX = getX() - 1;
-                    wantMoveY = getY();
-                    
-                    //cerr << "LEFT arrow key pressed." << endl;
+                int squirtX = -1, squirtY = -1;
+                if (getDirection() == left && getX()-2 >= 0) {
+                    squirtX = getX() - 2;
+                    squirtY = getY();
+                } else if (getDirection() == right && getX()+2 < 64) {
+                    squirtX = getX() + 2;
+                    squirtY = getY();
+                } else if (getDirection() == up && getY()+2 < 64) {
+                    squirtX = getX();
+                    squirtY = getY() + 2;
+                } else if (getDirection() == down && getY()-2 >= 0) {
+                    squirtX = getX();
+                    squirtY = getY() - 2;
                 }
-                break;
             
-            case KEY_PRESS_RIGHT:
-                if (getDirection() != right)
-                    setDirection(right);
-                else if (getX()+1 < 64) {
-                    wantMoveX = getX() + 1;
-                    wantMoveY = getY();
-                    
-                    //cerr << "RIGHT arrow key pressed." << endl;
+                if (squirtX != -1 && squirtY != -1) {
+                    Squirt* aSquirt = new Squirt(getWorld(), squirtX, squirtY, getDirection());
+                    getWorld()->addSquirt(aSquirt);
                 }
-                break;
+            }
             
-            case KEY_PRESS_UP:
-                if (getDirection() != up)
-                    setDirection(up);
-                else if (getY()+1 < 64) {
-                    wantMoveX = getX();
-                    wantMoveY = getY() + 1;
-                    
-                    //cerr << "UP arrow key pressed." << endl;
-                }
-                break;
+        } else if (keyboard == KEY_PRESS_LEFT) {
             
-            case KEY_PRESS_DOWN:
-                if (getDirection() != down)
-                    setDirection(down);
-                else if (getY()-1 >= 0) {
-                    wantMoveX = getX();
-                    wantMoveY = getY() - 1;
-                    
-                    //cerr << "DOWN arrow key pressed." << endl;
-                }
-                break;
+            if (getDirection() != left)
+                setDirection(left);
+            else if (getX()-1 >= 0) {
+                wantMoveX = getX() - 1;
+                wantMoveY = getY();
+                
+                //cerr << "LEFT arrow key pressed." << endl;
+            }
+            
+        } else if (keyboard == KEY_PRESS_RIGHT) {
+            
+            if (getDirection() != right)
+                setDirection(right);
+            else if (getX()+1 < 64) {
+                wantMoveX = getX() + 1;
+                wantMoveY = getY();
+                
+                //cerr << "RIGHT arrow key pressed." << endl;
+            }
+            
+        } else if (keyboard == KEY_PRESS_UP) {
+            
+            if (getDirection() != up)
+                setDirection(up);
+            else if (getY()+1 < 64) {
+                wantMoveX = getX();
+                wantMoveY = getY() + 1;
+                
+                //cerr << "UP arrow key pressed." << endl;
+            }
+            
+        } else if (keyboard == KEY_PRESS_DOWN) {
+            
+            if (getDirection() != down)
+                setDirection(down);
+            else if (getY()-1 >= 0) {
+                wantMoveX = getX();
+                wantMoveY = getY() - 1;
+                
+                //cerr << "DOWN arrow key pressed." << endl;
+            }
+            
         }
         
         // check if there is a Boulder on the desired-to-move position; if so, do not move
@@ -227,3 +262,94 @@ void Boulder::doSomething() {
         }
     }
 }
+
+// *** Squirt *** //
+Squirt::Squirt(StudentWorld* world, int x, int y, Direction dir) : Actor(world, IID_GOLD, x, y, dir, 1, 1) {
+    m_steps = 0;
+}
+
+Squirt::~Squirt() {
+    
+}
+
+void Squirt::doSomething() {
+    
+    if (m_steps >= 4) {
+        setDead();
+        return;
+    }
+    
+    int wantMoveX = -1, wantMoveY = -1;
+    Direction dir = getDirection();
+    switch (dir) {
+        case left:
+            if (getX() - 1 >= 0) {
+                wantMoveX = getX() - 1;
+                wantMoveY = getY();
+            } else {
+                setDead();
+                return;
+            }
+            break;
+            
+        case right:
+            if (getX() + 1 < 64) {
+                wantMoveX = getX() + 1;
+                wantMoveY = getY();
+            } else {
+                setDead();
+                return;
+            }
+            break;
+            
+        case up:
+            if (getY() + 1 < 64) {
+                wantMoveX = getX();
+                wantMoveY = getY() + 1;
+            } else {
+                setDead();
+                return;
+            }
+            break;
+            
+        case down:
+            if (getY() - 1 >= 0) {
+                wantMoveX = getX();
+                wantMoveY = getY() - 1;
+            } else {
+                setDead();
+                return;
+            }
+            break;
+            
+        default:
+            break;
+    }
+    
+    // if it collides with a Dirt
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            if (getWorld()->getDirt(wantMoveX + i, wantMoveY + j) != nullptr) {
+                cerr << "A Squirt collided with a Dirt." << endl;
+                setDead();
+                return;
+            }
+        }
+    }
+    
+    
+    // if it collides with a Boulder
+    for (int i = 0; i < getWorld()->nBoulders(); i++) {
+        if (didCollide(getX(), getY(), getWorld()->getBoulder(i)->getX(), getWorld()->getBoulder(i)->getY())) {
+            cerr << "A Squirt collided with a Boulder." << endl;
+            setDead();
+            return;
+        }
+    }
+    
+    moveTo(wantMoveX, wantMoveY);
+    m_steps++;
+    return;
+}
+
+

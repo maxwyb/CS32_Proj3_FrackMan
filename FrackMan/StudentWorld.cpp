@@ -39,15 +39,13 @@ int StudentWorld::init()
     
     for (int i = 0; i < nBoulders(); i++) { // remove Dirts in Boulder position
         int boulderX = getBoulder(i)->getX(), boulderY = getBoulder(i)->getY();
-        for (int j = 0; j < 4; j++) {
-            for (int k = 0; k < 4; k++) {
+        for (int j = 0; j < 4; j++)
+            for (int k = 0; k < 4; k++)
                 if (boulderX + j < 64 && boulderY + k < 64) {
-                    cerr << "delete m_dirt called" << endl;
+                    cerr << "m_dirt[" << boulderX + j << "][" << boulderY + k << "] is deleted because a Boulder occupies the point." << endl;
                     delete m_dirt[boulderX + j][boulderY + k];
                     m_dirt[boulderX + j][boulderY + k] = nullptr;
                 }
-            }
-        }
     }
 
     setGameStatText(setDisplayText());
@@ -73,6 +71,20 @@ int StudentWorld::move()
         }
     }
     
+    // Squirt
+    for (int i = 0; i < m_squirts.size(); i++) {
+        m_squirts[i]->doSomething();
+    }
+    
+    for (int i = 0; i < m_squirts.size(); i++) {
+        if (!m_squirts[i]->isAlive()) {
+            delete m_squirts[i];
+            m_squirts.erase(m_squirts.begin() + i);
+        }
+    }
+    
+    
+    // Player: check life
     if (m_HP == 0) {
         decLives();
         return GWSTATUS_PLAYER_DIED;

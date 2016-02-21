@@ -130,10 +130,6 @@ public:
     virtual ~Boulder();
     
     virtual void doSomething();
-        // if in stable state
-        // if in waiting state
-        // if in falling state
-        // if in dead state
     
 private:
     int m_state; // 0 for stable, 1 for waiting, 2 for falling
@@ -155,10 +151,15 @@ private:
 };
 
 
-class Squirts {
+class Squirt : public Actor {
 public:
+    Squirt(StudentWorld* world, int x, int y, Direction dir);
+    virtual ~Squirt();
+    
+    virtual void doSomething();
     
 private:
+    int m_steps; // number of steps it has gone
     
 };
 

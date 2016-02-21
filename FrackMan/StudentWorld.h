@@ -59,6 +59,8 @@ public:
     
     void changeHP(int num) { m_HP += num; }
     
+    int getWater() { return m_water; }
+    
     void setWater(int num) { m_water = num; }
     
     void changeWater(int num) { m_water += num; }
@@ -86,6 +88,14 @@ public:
     int nBoulders() { return m_boulders.size(); }
     
     Boulder* getBoulder(int num) { return m_boulders[num]; }
+    
+    // Squirt
+    void addSquirt(Squirt* aSquirt) { m_squirts.push_back(aSquirt); }
+    
+    int nSquirts() { return m_squirts.size(); }
+    
+    Squirt* getSquirt(int num) { return m_squirts[num]; }
+    
 
 private:
     
@@ -98,8 +108,10 @@ private:
     
     Dirt* m_dirt[64][64];
     std::vector<Boulder*> m_boulders;
+    std::vector<Squirt*> m_squirts;
     
-    std::vector<Actor*> m_actors;
+    
+    //std::vector<Actor*> m_actors;
     FrackMan* m_player;
     
     std::string setDisplayText();
