@@ -124,18 +124,20 @@ private:
 };
 
 
-class Boulder : public GraphObject {
+class Boulder : public Actor {
 public:
-    bool isAlive();
-    virtual void doSomething() {
+    Boulder(StudentWorld* world, int x, int y);
+    virtual ~Boulder();
+    
+    virtual void doSomething();
         // if in stable state
         // if in waiting state
         // if in falling state
         // if in dead state
-    }
     
 private:
-    int m_state; // 0 for stable, 1 for waiting, 2 for falling, -1 for dead
+    int m_state; // 0 for stable, 1 for waiting, 2 for falling
+    int ticks; // ticks undergone after in waiting state
     
 };
 

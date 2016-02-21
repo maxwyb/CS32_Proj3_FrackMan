@@ -4,8 +4,10 @@
 #include "GameWorld.h"
 #include "GameConstants.h"
 #include "Actor.h"
+
 #include <string>
 #include <vector>
+#include <cstdlib>
 
 // Students:  Add code to this file, StudentWorld.cpp, Actor.h, and Actor.cpp
 
@@ -33,67 +35,24 @@ public:
 	{
         m_oilLeft = 2;
 	}
-
-	virtual int init()
-	{
-        std::cerr << "init() function called." << std::endl;
-        m_player = new FrackMan(this);
-        
-        for (int i = 0; i < 64; i++) {
-            for (int j = 0; j < 64; j++) {
-                // leave a mineshaft without Dirt
-                if ((i >= 30 && i <= 33 && j>= 4 && j<=59) || j > 59) {
-                    m_dirt[i][j] = nullptr;
-                    continue;
-                }
-                m_dirt[i][j] = new Dirt(this, i, j);
-            }
-        }
-        
-        std::cerr << "Dirt map construction finished. nullptr entries:" << std::endl;
+    
+    virtual ~StudentWorld() {
+        // similar to cleanUp()
         for (int i = 0; i < 64; i++)
-            for (int j = 0; j < 64; j++)
-                if (m_dirt[i][j] == nullptr)
-                    std::cerr << "i = " << i << "; j = " << j << std::endl;
-        
-        setGameStatText(setDisplayText());
-        
-		return GWSTATUS_CONTINUE_GAME;
-	}
-
-	virtual int move()
-	{
-        //std::cerr << "move() function called." << std::endl;
-        setGameStatText(setDisplayText());
-        m_player->doSomething();
-        
-        if (m_HP == 0) {
-            decLives();
-            return GWSTATUS_PLAYER_DIED;
-        } else
-            return GWSTATUS_CONTINUE_GAME;
- 	}
-
-	virtual void cleanUp()
-	{
-        std::cerr << "cleanUp() function called." << std::endl;
-        
-        for (int i = 0; i < 64; i++) 
             for (int j = 0; j < 64; j++)
                 if (m_dirt[i][j] != nullptr) {
                     delete m_dirt[i][j];
                     m_dirt[i][j] = nullptr;
                 }
         
-        std::cerr << "Dirt map destruction finished. Non-nullptr entries:" << std::endl;
-        for (int i = 0; i < 64; i++)
-            for (int j = 0; j < 64; j++)
-                if (m_dirt[i][j] != nullptr)
-                    std::cerr << "i = " << i << "; j = " << j << std::endl;
-        
         delete m_player;
-	}
+    }
+
+    virtual int init();
     
+    virtual int move();
+    
+    virtual void cleanUp();
     
     // member functions for FrackMan-related member variables
     void setHP(int num) { m_HP = num; }
@@ -115,10 +74,18 @@ public:
     void changeOilLeft(int num) { m_oilLeft += num; }
     
     
-    // member functions for Dirt-related member variables
+    // Dirt
     Dirt* getDirt(int x, int y) { return m_dirt[x][y]; }
     
     void setDirt(Dirt* dirt, int x, int y) { m_dirt[x][y] = dirt; }
+    
+    // FrackMan
+    FrackMan* getPlayer() { return m_player; }
+    
+    // Boulder
+    int nBoulders() { return m_boulders.size(); }
+    
+    Boulder* getBoulder(int num) { return m_boulders[num]; }
 
 private:
     
@@ -129,7 +96,8 @@ private:
     
     int m_oilLeft; // remained barrels of oil
     
-    Dirt* m_dirt[64][64]; // map of Dirt
+    Dirt* m_dirt[64][64];
+    std::vector<Boulder*> m_boulders;
     
     std::vector<Actor*> m_actors;
     FrackMan* m_player;
@@ -138,5 +106,3 @@ private:
 };
 
 #endif // STUDENTWORLD_H_
-
-

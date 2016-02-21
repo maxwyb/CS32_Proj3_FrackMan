@@ -7,7 +7,91 @@ GameWorld* createStudentWorld(string assetDir)
 	return new StudentWorld(assetDir);
 }
 
-// Students:  Add code to this file (if you wish), StudentWorld.h, Actor.h and Actor.cpp
+
+int StudentWorld::init()
+{
+    m_player = new FrackMan(this);
+    
+    // Dirt
+    for (int i = 0; i < 64; i++) {
+        for (int j = 0; j < 64; j++) {
+            // leave a mineshaft without Dirt
+            if ((i >= 30 && i <= 33 && j>= 4 && j<=59) || j > 59) {
+                m_dirt[i][j] = nullptr;
+                continue;
+            }
+            
+            m_dirt[i][j] = new Dirt(this, i, j);
+        }
+    }
+    
+    // Boulder
+    int temp1 = getLevel()/2 + 2, temp2 = 6;
+    int B = temp1 < temp2 ? temp1 : temp2;
+    for (int i = 0; i < B; i++) {
+        int x = rand() % 64, y = rand() % 64;
+        if ((x > 61 || y > 57) || (x >= 27 && x <= 33 && y>= 4 && y<=59)) { // out of Dirt's range or in the mineshaft
+            i--;
+            continue;
+        }
+        m_boulders.push_back(new Boulder(this, x, y));
+    }
+    
+    for (int i = 0; i < nBoulders(); i++) { // remove Dirts in Boulder position
+        int boulderX = getBoulder(i)->getX(), boulderY = getBoulder(i)->getY();
+        for (int j = 0; j < 4; j++) {
+            for (int k = 0; k < 4; k++) {
+                if (boulderX + j < 64 && boulderY + k < 64) {
+                    cerr << "delete m_dirt called" << endl;
+                    delete m_dirt[boulderX + j][boulderY + k];
+                    m_dirt[boulderX + j][boulderY + k] = nullptr;
+                }
+            }
+        }
+    }
+
+    setGameStatText(setDisplayText());
+    
+    return GWSTATUS_CONTINUE_GAME;
+}
+
+int StudentWorld::move()
+{
+    setGameStatText(setDisplayText());
+    
+    m_player->doSomething();
+    
+    // Boulder
+    for (int i = 0; i < m_boulders.size(); i++)
+        m_boulders[i]->doSomething();
+    
+    for (int i = 0; i < m_boulders.size(); i++) {
+        if (m_boulders[i]->isAlive() == false) {
+            delete m_boulders[i];
+            cerr << "Destructor of a Boulder called." << endl;
+            m_boulders.erase(m_boulders.begin() + i);
+        }
+    }
+    
+    if (m_HP == 0) {
+        decLives();
+        return GWSTATUS_PLAYER_DIED;
+    } else
+        return GWSTATUS_CONTINUE_GAME;
+    
+}
+
+void StudentWorld::cleanUp()
+{
+    for (int i = 0; i < 64; i++)
+        for (int j = 0; j < 64; j++)
+            if (m_dirt[i][j] != nullptr) {
+                delete m_dirt[i][j];
+                m_dirt[i][j] = nullptr;
+            }
+    
+    delete m_player;
+}
 
 string StudentWorld::setDisplayText() {
     string text;
@@ -15,7 +99,7 @@ string StudentWorld::setDisplayText() {
     // sub-string processing
     string scr_temp = to_string(getScore());
     string scr = "";
-    for (int i = 0; i < 8 - scr_temp.size(); i++)
+    for (int i = 0; i < 6 - scr_temp.size(); i++)
         scr += "0";
     scr += scr_temp;
     
@@ -58,6 +142,6 @@ string StudentWorld::setDisplayText() {
     oilLeft += oilLeft_temp;
     
     // final displayed string
-    text = "Str: " + scr + "  Lvl: " + lvl + "  Lives: " + lives + "  Hlth: " + hth + "  Water: " + water + "  Gld: " + gold + "  Sonar: " + sonar + "  Oil Left: " + oilLeft;
+    text = "Scr: " + scr + "  Lvl: " + lvl + "  Lives: " + lives + "  Hlth: " + hth + "  Wtr: " + water + "  Gld: " + gold + "  Sonar: " + sonar + "  Oil Left: " + oilLeft;
     return text;
 }

@@ -3,7 +3,12 @@
 #include <cmath>
 
 using namespace std;
-// Students:  Add code to this file (if you wish), Actor.h, StudentWorld.h, and StudentWorld.cpp
+
+// *** Non-member Functions *** //
+
+double distance(int x1, int y1, int x2, int y2) {
+    return sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2));
+}
 
 // *** Actor *** //
 
@@ -11,10 +16,12 @@ Actor::Actor(StudentWorld* world, int imageID, int startX, int startY, Direction
     
     m_world = world;
     m_isAlive = true;
+    
+    setVisible(true);
 }
 
 Actor::~Actor() {
-    
+    setVisible(false);
 }
 
 StudentWorld* Actor::getWorld() {
@@ -29,18 +36,19 @@ void Actor::setDead() {
     m_isAlive = false;
 }
 
+
 // *** FrackMan *** //
+
 FrackMan::FrackMan(StudentWorld* world) : Actor(world, IID_PLAYER, 30, 60, right, 1, 0) {
     world->setHP(10);
     world->setWater(5);
     world->setSonar(1);
     world->setGold(0);
     
-    setVisible(true);
 }
 
 FrackMan::~FrackMan() {
-    setVisible(false);
+
 }
 
 void FrackMan::doSomething() {
@@ -61,7 +69,7 @@ void FrackMan::doSomething() {
     }
     
     int keyboard = 0;
-    if (getWorld()->getKey(keyboard) == true)
+    if (getWorld()->getKey(keyboard) == true) {
         //cerr << "Getting keyboard stroke..." << endl;
         switch (keyboard) {
             case KEY_PRESS_ESCAPE:
@@ -110,21 +118,18 @@ void FrackMan::doSomething() {
                     //cerr << "DOWN arrow key pressed." << endl;
                 }
                 break;
-            
-            //default:
-                //cerr << "NO direction key pressed." << endl;
-        
+        }
     }
-    
 }
 
 // *** Dirt *** //
+
 Dirt::Dirt(StudentWorld* world, int x, int y) : Actor(world, IID_DIRT, x, y, right, 0.25, 3) {
-    setVisible(true);
+
 }
 
 Dirt::~Dirt() {
-    setVisible(false);
+
 }
 
 void Dirt::doSomething() {
@@ -132,11 +137,69 @@ void Dirt::doSomething() {
 }
 
 void Dirt::destroy() {
-    setVisible(false);
     delete this;
 }
 
-// *** Non-member Functions *** //
-double getDistance(int x1, int y1, int x2, int y2) {
-    return sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2));
+// *** Boulder *** //
+
+Boulder::Boulder(StudentWorld* world, int x, int y) : Actor(world, IID_BOULDER, x, y, down, 1, 1) {
+    m_state = 0;
+    ticks = 0;
+}
+
+Boulder::~Boulder() {
+    
+}
+
+void Boulder::doSomething() {
+    if (!isAlive())
+        return;
+    
+    if (m_state == 0) {
+        bool isDirt = false;
+        for (int i = 0; i < 4; i++) {
+            if (getY() - 1 >= 0 && getX() + i < 64 && getWorld()->getDirt(getX()+i, getY()-1) != nullptr)
+                isDirt = true;
+        }
+        
+        if (!isDirt) {
+            m_state = 1;
+            cerr << "Boulder entered State 1 (waiting)." << endl;
+        }
+    } else if (m_state == 1) {
+        ticks++;
+        if (ticks >= 30) {
+            m_state = 2;
+            getWorld()->playSound(SOUND_FALLING_ROCK);
+            cerr << "Boulder entered State 2 (falling)." << endl;
+        }
+    } else if (m_state == 2) {
+        moveTo(getX(), getY() - 1);
+        if (distance(getWorld()->getPlayer()->getX(), getWorld()->getPlayer()->getY(), getX(), getY()) <= 3) {
+            getWorld()->setHP(0);
+            getWorld()->getPlayer()->setDead();
+        }
+        
+        bool isObstructed = false;
+        for (int i = 0; i < 4; i++) {
+            if ((getY() - 1 >= 0 && getX() + i < 64 && getWorld()->getDirt(getX()+i, getY()-1) != nullptr) || getY() - 1 == 0)  { // runs into a Dirt or falls to bottom
+                isObstructed = true;
+                break;
+            }
+        }
+        
+        for (int i = 0; i < getWorld()->nBoulders(); i++) { // runs into another Boulder
+            Boulder* aBoulder = getWorld()->getBoulder(i);
+            if (getY() == aBoulder->getY() + 1 && getX() >= aBoulder->getX() && getX() < aBoulder->getX() - 4) {
+                isObstructed = true;
+                break;
+            }
+        }
+            
+        if (isObstructed) {
+            setDead();
+            cerr << "Boulder entered State 3 (dead)." << endl;
+            cerr << "Boulder.isAlive == " << isAlive() << endl;
+        }
+    }
 }
