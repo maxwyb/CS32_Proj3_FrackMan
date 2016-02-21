@@ -57,20 +57,25 @@ void FrackMan::doSomething() {
         return;
     }
     
+    // dig the Dirt
     cerr << "Current X = " << getX() << " ; current Y = " << getY() << "." << endl;
     for (int i = getX(); i <= getX()+ 3; i++) {
         for (int j = getY(); j <= getY() + 3; j++) {
             if (i < 64 && j < 64 && getWorld()->getDirt(i, j) != nullptr) {
                 getWorld()->getDirt(i, j)->destroy();
                 getWorld()->setDirt(nullptr, i, j);
-                getWorld()->playSound(SOUND_DIG);
             }
         }
     }
+    getWorld()->playSound(SOUND_DIG);
     
     int keyboard = 0;
+    
     if (getWorld()->getKey(keyboard) == true) {
         //cerr << "Getting keyboard stroke..." << endl;
+        int wantMoveX = -1, wantMoveY = -1;
+        bool willMove = true;
+        
         switch (keyboard) {
             case KEY_PRESS_ESCAPE:
                 cerr << "ESCAPE key pressed" << endl;
@@ -87,7 +92,9 @@ void FrackMan::doSomething() {
                 if (getDirection() != left)
                     setDirection(left);
                 else if (getX()-1 >= 0) {
-                    moveTo(getX() - 1, getY());
+                    wantMoveX = getX() - 1;
+                    wantMoveY = getY();
+                    
                     //cerr << "LEFT arrow key pressed." << endl;
                 }
                 break;
@@ -96,7 +103,9 @@ void FrackMan::doSomething() {
                 if (getDirection() != right)
                     setDirection(right);
                 else if (getX()+1 < 64) {
-                    moveTo(getX() + 1, getY());
+                    wantMoveX = getX() + 1;
+                    wantMoveY = getY();
+                    
                     //cerr << "RIGHT arrow key pressed." << endl;
                 }
                 break;
@@ -105,7 +114,9 @@ void FrackMan::doSomething() {
                 if (getDirection() != up)
                     setDirection(up);
                 else if (getY()+1 < 64) {
-                    moveTo(getX(), getY() + 1);
+                    wantMoveX = getX();
+                    wantMoveY = getY() + 1;
+                    
                     //cerr << "UP arrow key pressed." << endl;
                 }
                 break;
@@ -114,11 +125,24 @@ void FrackMan::doSomething() {
                 if (getDirection() != down)
                     setDirection(down);
                 else if (getY()-1 >= 0) {
-                    moveTo(getX(), getY() - 1);
+                    wantMoveX = getX();
+                    wantMoveY = getY() - 1;
+                    
                     //cerr << "DOWN arrow key pressed." << endl;
                 }
                 break;
         }
+        
+        // check if there is a Boulder on the desired-to-move position; if so, do not move
+        for (int i = 0; i < getWorld()->nBoulders(); i++) {
+            if ((wantMoveX > getWorld()->getBoulder(i)->getX()-4 && wantMoveX < getWorld()->getBoulder(i)->getX()+4) && (wantMoveY > getWorld()->getBoulder(i)->getY()-4 && wantMoveY < getWorld()->getBoulder(i)->getY()+4)) {
+                willMove = false;
+                break;
+            }
+        }
+        
+        if (willMove && (wantMoveX != -1 && wantMoveY != -1))
+            moveTo(wantMoveX, wantMoveY);
     }
 }
 
