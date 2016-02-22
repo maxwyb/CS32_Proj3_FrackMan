@@ -28,9 +28,11 @@ int StudentWorld::init()
     // Boulder
     int temp1 = getLevel()/2 + 2, temp2 = 6;
     int B = temp1 < temp2 ? temp1 : temp2;
+    cerr << "Number of Boulders this round = " << B << endl;
+    
     for (int i = 0; i < B; i++) {
         int x = rand() % 64, y = rand() % 64;
-        if ((x > 61 || y > 57) || (x >= 27 && x <= 33 && y>= 4 && y<=59)) { // out of Dirt's range or in the mineshaft
+        if ((y == 0 || x > 61 || y > 57) || (x >= 27 && x <= 33 && y>= 4 && y<=59)) { // at the bottom, out of Dirt's range or in the mineshaft
             i--;
             continue;
         }
@@ -76,6 +78,7 @@ int StudentWorld::move()
     
     setGameStatText(setDisplayText());
     
+    // FrackMan
     m_player->doSomething();
     
     // Boulder
@@ -126,6 +129,7 @@ int StudentWorld::move()
 
 void StudentWorld::cleanUp()
 {
+    // Dirt
     for (int i = 0; i < 64; i++)
         for (int j = 0; j < 64; j++)
             if (m_dirt[i][j] != nullptr) {
@@ -133,7 +137,26 @@ void StudentWorld::cleanUp()
                 m_dirt[i][j] = nullptr;
             }
     
+    // FrackMan
     delete m_player;
+    
+    // Boulder
+    for (int i = 0; i < m_boulders.size(); i++) {
+        delete m_boulders[i];
+        m_boulders.erase(m_boulders.begin()+i);
+    }
+    
+    // Squirt
+    for (int i = 0; i < m_squirts.size(); i++) {
+        delete m_squirts[i];
+        m_squirts.erase(m_squirts.begin()+i);
+    }
+    
+    // Barrel
+    for (int i = 0; i < m_barrels.size(); i++) {
+        delete m_barrels[i];
+        m_barrels.erase(m_barrels.begin()+i);
+    }
 }
 
 string StudentWorld::setDisplayText() {

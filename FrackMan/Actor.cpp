@@ -10,11 +10,11 @@ double distance(int x1, int y1, int x2, int y2) {
     return sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2));
 }
 
-bool didCollide(int x1, int y1, int x2, int y2) { // check if two 2*2 objects collide
-    for (int i1 = 0; i1 < 2; i1++)
-        for (int j1 = 0; j1 < 2; j1++)
-            for (int i2 = 0; i2 < 2; i2++)
-                for (int j2 = 0; j2 < 2; j2++) {
+bool didCollide(int x1, int y1, int x2, int y2) { // check if two 4*4 objects collide
+    for (int i1 = 0; i1 < 4; i1++)
+        for (int j1 = 0; j1 < 4; j1++)
+            for (int i2 = 0; i2 < 4; i2++)
+                for (int j2 = 0; j2 < 4; j2++) {
                     if (x1+i1 == x2+i2 && y1+j1 == y2+j2)
                         return true;
                 }
@@ -80,7 +80,7 @@ void FrackMan::doSomething() {
     
     // dig the Dirt
     cerr << "Current X = " << getX() << " ; current Y = " << getY() << "." << endl;
-    for (int i = getX(); i <= getX()+ 3; i++) {
+    for (int i = getX(); i <= getX() + 3; i++) {
         for (int j = getY(); j <= getY() + 3; j++) {
             if (i < 64 && j < 64 && getWorld()->getDirt(i, j) != nullptr) {
                 getWorld()->getDirt(i, j)->destroy();
@@ -91,7 +91,6 @@ void FrackMan::doSomething() {
     getWorld()->playSound(SOUND_DIG);
     
     int keyboard = 0;
-    
     if (getWorld()->getKey(keyboard) == true) {
         //cerr << "Getting keyboard stroke..." << endl;
         int wantMoveX = -1, wantMoveY = -1;
@@ -110,7 +109,8 @@ void FrackMan::doSomething() {
                 
                 getWorld()->changeWater(-1);
                 getWorld()->playSound(SOUND_PLAYER_SQUIRT);
-            
+                
+                // add a Squirt in proper direction, if possible
                 int squirtX = -1, squirtY = -1;
                 if (getDirection() == left && getX()-2 >= 0) {
                     squirtX = getX() - 2;
@@ -140,7 +140,7 @@ void FrackMan::doSomething() {
                 wantMoveX = getX() - 1;
                 wantMoveY = getY();
                 
-                //cerr << "LEFT arrow key pressed." << endl;
+            //cerr << "LEFT arrow key pressed." << endl;
             }
             
         } else if (keyboard == KEY_PRESS_RIGHT) {
@@ -151,7 +151,7 @@ void FrackMan::doSomething() {
                 wantMoveX = getX() + 1;
                 wantMoveY = getY();
                 
-                //cerr << "RIGHT arrow key pressed." << endl;
+            //cerr << "RIGHT arrow key pressed." << endl;
             }
             
         } else if (keyboard == KEY_PRESS_UP) {
@@ -161,9 +161,8 @@ void FrackMan::doSomething() {
             else if (getY()+1 < 64) {
                 wantMoveX = getX();
                 wantMoveY = getY() + 1;
-                
-                //cerr << "UP arrow key pressed." << endl;
             }
+            //cerr << "UP arrow key pressed." << endl;
             
         } else if (keyboard == KEY_PRESS_DOWN) {
             
@@ -172,16 +171,18 @@ void FrackMan::doSomething() {
             else if (getY()-1 >= 0) {
                 wantMoveX = getX();
                 wantMoveY = getY() - 1;
-                
-                //cerr << "DOWN arrow key pressed." << endl;
             }
+            
+            //cerr << "DOWN arrow key pressed." << endl;
             
         }
         
         // check if there is a Boulder on the desired-to-move position; if so, do not move
         for (int i = 0; i < getWorld()->nBoulders(); i++) {
-            if ((wantMoveX > getWorld()->getBoulder(i)->getX()-4 && wantMoveX < getWorld()->getBoulder(i)->getX()+4) && (wantMoveY > getWorld()->getBoulder(i)->getY()-4 && wantMoveY < getWorld()->getBoulder(i)->getY()+4)) {
+            //if ((wantMoveX > getWorld()->getBoulder(i)->getX()-4 && wantMoveX < getWorld()->getBoulder(i)->getX()+4) && (wantMoveY > getWorld()->getBoulder(i)->getY()-4 && wantMoveY < getWorld()->getBoulder(i)->getY()+4)) {
+            if (didCollide(wantMoveX, wantMoveY, getWorld()->getBoulder(i)->getX(), getWorld()->getBoulder(i)->getY())) {
                 willMove = false;
+                cerr << "willMove = false; FrackMan not moving this tick." << endl;
                 break;
             }
         }
@@ -212,6 +213,7 @@ void Dirt::destroy() {
 // *** Boulder *** //
 
 Boulder::Boulder(StudentWorld* world, int x, int y) : Actor(world, IID_BOULDER, x, y, down, 1, 1) {
+    cerr << "A Boulder constructed at x = " << x << ", y = " << y << endl;
     m_state = 0;
     ticks = 0;
 }
@@ -224,10 +226,11 @@ void Boulder::doSomething() {
     if (!isAlive())
         return;
     
-    if (m_state == 0) {
+    if (m_state == 0) { // stable state
+        
         bool isDirt = false;
         for (int i = 0; i < 4; i++) {
-            if (getY() - 1 >= 0 && getX() + i < 64 && getWorld()->getDirt(getX()+i, getY()-1) != nullptr)
+            if (getY()-1 >= 0 && getX()+i < 64 && getWorld()->getDirt(getX()+i, getY()-1) != nullptr)
                 isDirt = true;
         }
         
@@ -235,18 +238,23 @@ void Boulder::doSomething() {
             m_state = 1;
             cerr << "Boulder entered State 1 (waiting)." << endl;
         }
-    } else if (m_state == 1) {
+        
+    } else if (m_state == 1) { // waiting state
+        
         ticks++;
         if (ticks >= 30) {
             m_state = 2;
             getWorld()->playSound(SOUND_FALLING_ROCK);
             cerr << "Boulder entered State 2 (falling)." << endl;
         }
-    } else if (m_state == 2) {
+        
+    } else if (m_state == 2) { // falling state
+        
         moveTo(getX(), getY() - 1);
-        if (distance(getWorld()->getPlayer()->getX(), getWorld()->getPlayer()->getY(), getX(), getY()) <= 3) {
+        if (distance(getWorld()->getPlayer()->getX(), getWorld()->getPlayer()->getY(), getX(), getY()) <= 3) { // collides with the FrackMan
             getWorld()->setHP(0);
             getWorld()->getPlayer()->setDead();
+            setDead();
         }
         
         bool isObstructed = false;
@@ -259,7 +267,7 @@ void Boulder::doSomething() {
         
         for (int i = 0; i < getWorld()->nBoulders(); i++) { // runs into another Boulder
             Boulder* aBoulder = getWorld()->getBoulder(i);
-            if (getY() == aBoulder->getY() + 1 && getX() >= aBoulder->getX() && getX() < aBoulder->getX() - 4) {
+            if (getY() == aBoulder->getY()+1 && getX() >= aBoulder->getX() && getX() < aBoulder->getX()+4) {
                 isObstructed = true;
                 break;
             }
@@ -274,7 +282,7 @@ void Boulder::doSomething() {
 }
 
 // *** Squirt *** //
-Squirt::Squirt(StudentWorld* world, int x, int y, Direction dir) : Actor(world, IID_GOLD, x, y, dir, 1, 1) {
+Squirt::Squirt(StudentWorld* world, int x, int y, Direction dir) : Actor(world, IID_WATER_SPURT, x, y, dir, 1, 1) {
     m_steps = 0;
 }
 
@@ -337,8 +345,8 @@ void Squirt::doSomething() {
     }
     
     // if it collides with a Dirt
-    for (int i = 0; i < 2; i++) {
-        for (int j = 0; j < 2; j++) {
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
             if (getWorld()->getDirt(wantMoveX + i, wantMoveY + j) != nullptr) {
                 cerr << "A Squirt collided with a Dirt." << endl;
                 setDead();
@@ -346,7 +354,6 @@ void Squirt::doSomething() {
             }
         }
     }
-    
     
     // if it collides with a Boulder
     for (int i = 0; i < getWorld()->nBoulders(); i++) {
