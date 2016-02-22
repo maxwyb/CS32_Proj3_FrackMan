@@ -47,6 +47,16 @@ void Actor::setDead() {
     m_isAlive = false;
 }
 
+// *** Goodies *** //
+
+Goodies::Goodies(StudentWorld* world, int imageID, int startX, int startY, Direction dir, double size, unsigned int depth) : Actor(world, imageID, startX, startY, dir, size, depth) {
+    
+}
+
+Goodies::~Goodies() {
+    
+}
+
 
 // *** FrackMan *** //
 
@@ -69,7 +79,7 @@ void FrackMan::doSomething() {
     }
     
     // dig the Dirt
-//    cerr << "Current X = " << getX() << " ; current Y = " << getY() << "." << endl;
+    cerr << "Current X = " << getX() << " ; current Y = " << getY() << "." << endl;
     for (int i = getX(); i <= getX()+ 3; i++) {
         for (int j = getY(); j <= getY() + 3; j++) {
             if (i < 64 && j < 64 && getWorld()->getDirt(i, j) != nullptr) {
@@ -353,3 +363,34 @@ void Squirt::doSomething() {
 }
 
 
+// *** Barrel *** //
+
+Barrel::Barrel(StudentWorld* world, int x, int y) : Goodies(world, IID_BARREL, x, y, right, 1, 2) {
+    cerr << "A Barrel constructed at x = " << x << ", y = " << y << endl;
+    setVisible(false);
+    isDiscovered = false;
+}
+
+Barrel::~Barrel() {
+    
+}
+
+void Barrel::doSomething() {
+    if (!isAlive())
+        return;
+    
+    if (!isDiscovered && distance(getX(), getY(), getWorld()->getPlayer()->getX(), getWorld()->getPlayer()->getY()) <= 4) {
+        cerr << "A Barrel is discovered." << endl;
+        isDiscovered = true;
+        setVisible(true);
+        return;
+    }
+    
+    if (distance(getX(), getY(), getWorld()->getPlayer()->getX(), getWorld()->getPlayer()->getY()) <= 3) {
+        cerr << "A Barrel is picked up." << endl;
+        setDead();
+        getWorld()->playSound(SOUND_FOUND_OIL);
+        getWorld()->increaseScore(1000);
+        getWorld()->changeOilLeft(-1);
+    }
+}

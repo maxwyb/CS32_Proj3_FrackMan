@@ -33,7 +33,7 @@ public:
 	StudentWorld(std::string assetDir)
 	 : GameWorld(assetDir)
 	{
-        m_oilLeft = 2;
+
 	}
     
     virtual ~StudentWorld() {
@@ -109,6 +109,7 @@ private:
     Dirt* m_dirt[64][64];
     std::vector<Boulder*> m_boulders;
     std::vector<Squirt*> m_squirts;
+    std::vector<Barrel*> m_barrels;
     
     
     //std::vector<Actor*> m_actors;

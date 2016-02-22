@@ -48,6 +48,21 @@ int StudentWorld::init()
                 }
     }
 
+    // Barrel of oil
+    temp1 = 2 + getLevel(), temp2 = 20;
+    int L = temp1 < temp2 ? temp1 : temp2;
+    m_oilLeft = L;
+    
+    for (int i = 0; i < L; i++) {
+        int x = rand() % 64, y = rand() % 64;
+        if ((x >= 30 && x <= 33 && y >= 4 && y <=59) || y > 59) { // the random position is not inside a Dirt
+            i--;
+            continue;
+        }
+        m_barrels.push_back(new Barrel(this, x, y));
+    }
+    
+    
     setGameStatText(setDisplayText());
     
     return GWSTATUS_CONTINUE_GAME;
@@ -55,6 +70,10 @@ int StudentWorld::init()
 
 int StudentWorld::move()
 {
+    if (m_oilLeft == 0) {
+        return GWSTATUS_FINISHED_LEVEL;
+    }
+    
     setGameStatText(setDisplayText());
     
     m_player->doSomething();
@@ -80,6 +99,18 @@ int StudentWorld::move()
         if (!m_squirts[i]->isAlive()) {
             delete m_squirts[i];
             m_squirts.erase(m_squirts.begin() + i);
+        }
+    }
+    
+    // Barrel of oil
+    for (int i = 0; i < m_barrels.size(); i++) {
+        m_barrels[i]->doSomething();
+    }
+    
+    for (int i = 0; i < m_barrels.size(); i++) {
+        if (m_barrels[i]->isAlive() == false) {
+            delete m_barrels[i];
+            m_barrels.erase(m_barrels.begin() + i);
         }
     }
     

@@ -81,13 +81,18 @@ private:
 };
 
 
-class Goodies : public GraphObject {
+class Goodies : public Actor {
 public:
-    void pickItUp();
+    Goodies(StudentWorld* world, int imageID, int startX, int startY, Direction dir, double size, unsigned int depth);
+    virtual ~Goodies();
+    
+    virtual void doSomething() = 0;
+    
+//    void pickItUp();
     
 private:
-    int pickup_able; // 0 for pickup-able by FrackMan, 1 for pickup-able by Protesters, 2 for both
-    int ticks_existing; // already existing for how many ticks; -1 for permanent state
+//    int pickup_able; // 0 for pickup-able by FrackMan, 1 for pickup-able by Protesters, 2 for both
+//    int ticks_existing; // already existing for how many ticks; -1 for permanent state
 };
 
 
@@ -118,9 +123,13 @@ private:
 
 class Barrel : public Goodies {
 public:
+    Barrel(StudentWorld* world, int x, int y);
+    virtual ~Barrel();
+    
+    virtual void doSomething();
     
 private:
-    
+    bool isDiscovered;
 };
 
 
