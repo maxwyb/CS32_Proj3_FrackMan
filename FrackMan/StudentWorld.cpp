@@ -155,6 +155,71 @@ int StudentWorld::move()
         }
     }
     
+    // Sonar Kit and Water Pool: construct and doSomething
+    int prob1 = rand() % (getLevel()*25 + 300);
+    if (prob1 == 0) {
+        cerr << "Prepare to construct a Sonar Kit OR a Water Pool." << endl;
+        int prob2 = rand() % 5;
+        if (prob2 == 0) { // add Sonar Kit
+            
+            cerr << "Constructing a Sonar Kit..." << endl;
+            SonarKit* aSonar = new SonarKit(this, 0, 60);
+            m_sonars.push_back(aSonar);
+            
+        } else { // add Water Pool
+            cerr << "Constructing a Water Pool..." << endl;
+            
+            vector<int> emptyX, emptyY;
+            for (int i = 0; i < 61; i++) {
+                for (int j = 0; j < 61; j++) {
+                    bool isEmpty = true; // the 4*4 grid at (i, j) is empty
+                    for (int a = 0; a < 4; a++) {
+                        for (int b = 0; b < 4; b++) {
+                            if (m_dirt[i+a][j+b] != nullptr) {
+                                isEmpty = false;
+                                break;
+                            }
+                        }
+                        if (!isEmpty)
+                            break;
+                    }
+                    
+                    if (isEmpty) {
+                        emptyX.push_back(i);
+                        emptyY.push_back(j);
+                    }
+                }
+            }
+            
+            int pos = rand() % emptyX.size();
+            Water* aWater = new Water(this, emptyX[pos], emptyY[pos]);
+            m_waters.push_back(aWater);
+            
+        }
+    }
+    
+    for (int i = 0; i < m_sonars.size(); i++) {
+        m_sonars[i]->doSomething();
+    }
+    
+    for (int i = 0; i < m_waters.size(); i++) {
+        m_waters[i]->doSomething();
+    }
+    
+    for (int i = 0; i < m_sonars.size(); i++) {
+        if (!m_sonars[i]->isAlive()) {
+            delete m_sonars[i];
+            m_sonars.erase(m_sonars.begin() + i);
+        }
+    }
+    
+    for (int i = 0; i < m_waters.size(); i++) {
+        if (!m_waters[i]->isAlive()) {
+            delete m_waters[i];
+            m_waters.erase(m_waters.begin() + i);
+        }
+    }
+    
     // Player: check life
     if (m_HP == 0) {
         decLives();
@@ -200,6 +265,22 @@ void StudentWorld::cleanUp()
         delete m_golds[i];
         m_golds.erase(m_golds.begin()+i);
     }
+    
+    // Sonar Kit
+    cerr << "Before cleanUp, m_sonars.size() = " << m_sonars.size() << endl;
+    for (int i = 0; i < m_sonars.size(); i++) {
+        delete m_sonars[i];
+        cerr << "Now the ith object is deleted; i = " << i << endl;
+        m_sonars.erase(m_sonars.begin() + i);
+    }
+    cerr << "After cleanUp, m_sonars.size() = " << m_sonars.size() << endl;
+    
+    // Water Pool
+    for (int i = 0; i < m_waters.size(); i++) {
+        delete m_waters[i];
+        m_waters.erase(m_waters.begin() + i);
+    }
+    cerr << "After cleanUp, m_waters.size() = " << m_waters.size() << endl;
 }
 
 string StudentWorld::setDisplayText() {

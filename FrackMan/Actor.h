@@ -98,10 +98,14 @@ private:
 };
 
 
-class SonarKits : public Goodies {
+class SonarKit : public Goodies {
 public:
+    SonarKit(StudentWorld* world, int x, int y);
+    virtual ~SonarKit();
+    virtual void doSomething();
     
 private:
+    int m_ticks;
     
 };
 
@@ -122,9 +126,12 @@ private:
 
 class Water : public Goodies {
 public:
+    Water(StudentWorld* world, int x, int y);
+    virtual ~Water();
+    virtual void doSomething();
     
 private:
-
+    int m_ticks;
 };
 
 

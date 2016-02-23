@@ -108,6 +108,8 @@ private:
     std::vector<Squirt*> m_squirts;
     std::vector<Barrel*> m_barrels;
     std::vector<GoldNugget*> m_golds;
+    std::vector<SonarKit*> m_sonars;
+    std::vector<Water*> m_waters;
     
     
     //std::vector<Actor*> m_actors;

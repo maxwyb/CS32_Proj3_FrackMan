@@ -459,9 +459,64 @@ void GoldNugget::doSomething() {
     
 }
 
+// *** SonarKit *** //
+SonarKit::SonarKit(StudentWorld* world, int x, int y) : Goodies(world, IID_SONAR, x, y, right, 1, 2) {
+    m_ticks = 0;
+}
+
+SonarKit::~SonarKit() {
+    
+}
+
+void SonarKit::doSomething() {
+    if (!isAlive())
+        return;
+    
+    if(distance(getX(), getY(), getWorld()->getPlayer()->getX(), getWorld()->getPlayer()->getY()) <= 3) {
+        setDead();
+        getWorld()->playSound(SOUND_GOT_GOODIE);
+        getWorld()->changeSonar(1);
+        getWorld()->increaseScore(75);
+    }
+    
+    m_ticks++;
+    int temp1 = 100, temp2 = 300 - getWorld()->getLevel()*10;
+    int totalTick = temp1 > temp2 ? temp1 : temp2;
+    if (m_ticks >= totalTick) {
+        setDead();
+        return;
+    }
+}
 
 
+// *** Water Pool *** //
+Water::Water(StudentWorld* world, int x, int y) : Goodies(world, IID_WATER_POOL, x, y, right, 1, 2) {
+    m_ticks = 0;
+}
 
+Water::~Water() {
+    
+}
+
+void Water::doSomething() {
+    if (!isAlive())
+        return;
+    
+    if(distance(getX(), getY(), getWorld()->getPlayer()->getX(), getWorld()->getPlayer()->getY()) <= 3) {
+        setDead();
+        getWorld()->playSound(SOUND_GOT_GOODIE);
+        getWorld()->changeWater(5);
+        getWorld()->increaseScore(100);
+    }
+    
+    m_ticks++;
+    int temp1 = 100, temp2 = 300 - getWorld()->getLevel()*10;
+    int totalTick = temp1 > temp2 ? temp1 : temp2;
+    if (m_ticks >= totalTick) {
+        setDead();
+        return;
+    }
+}
 
 
 
