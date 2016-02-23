@@ -175,6 +175,12 @@ void FrackMan::doSomething() {
             
             //cerr << "DOWN arrow key pressed." << endl;
             
+        } else if (keyboard == KEY_PRESS_TAB) {
+            if (getWorld()->getGold() > 0) {
+                GoldNugget* aGold = new GoldNugget(getWorld(), getX(), getY(), 2);
+                getWorld()->addGoldNugget(aGold);
+                getWorld()->changeGold(-1);
+            }
         }
         
         // check if there is a Boulder on the desired-to-move position; if so, do not move
@@ -401,3 +407,70 @@ void Barrel::doSomething() {
         getWorld()->changeOilLeft(-1);
     }
 }
+
+// *** GoldNugget *** //
+GoldNugget::GoldNugget(StudentWorld* world, int x, int y, int pickup) : Goodies(world, IID_GOLD, x, y, right, 1, 2) {
+    m_pickup = pickup;
+    m_ticks = 0;
+    
+    if (m_pickup == 1) {
+        setVisible(false);
+        m_isVisible = false;
+    } else if (m_pickup == 2) {
+        setVisible(true);
+        m_isVisible = true;
+    }
+    
+    cerr << "A Gold Nugget is constructed at x = " << x << ", y = " << y << endl;
+}
+
+GoldNugget::~GoldNugget() {
+    
+}
+
+void GoldNugget::doSomething() {
+    if (!isAlive())
+        return;
+    
+    if (m_pickup == 2) {
+        m_ticks++;
+        if (m_ticks >= 100) {
+            setDead();
+            return;
+        }
+    }
+    
+    if (!m_isVisible && distance(getX(), getY(), getWorld()->getPlayer()->getX(), getWorld()->getPlayer()->getY()) <= 4) {
+        
+        cerr << "A Gold Nugget pickup-able by FrackMan is discovered." << endl;
+        setVisible(true);
+        m_isVisible = true;
+        return;
+        
+    } else if (m_pickup == 1 && distance(getX(), getY(), getWorld()->getPlayer()->getX(), getWorld()->getPlayer()->getY()) <= 3) {
+        
+        cerr << "A Gold Nugget is picked-up by FrackMan." << endl;
+        setDead();
+        getWorld()->playSound(SOUND_GOT_GOODIE);
+        getWorld()->increaseScore(10);
+        getWorld()->changeGold(1);
+        
+    }
+    
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

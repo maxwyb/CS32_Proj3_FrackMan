@@ -17,9 +17,11 @@
  }
  */
 
+double distance(int x1, int y1, int x2, int y2);
+
+bool didCollide(int x1, int y1, int x2, int y2);
 
 class StudentWorld;
-
 
 class Actor : public GraphObject {
 public:
@@ -106,9 +108,14 @@ private:
 
 class GoldNugget : public Goodies {
 public:
-    GoldNugget(int state);
+    GoldNugget(StudentWorld* world, int x, int y, int pickup);
+    virtual ~GoldNugget();
+    virtual void doSomething();
     
 private:
+    int m_pickup; // 1 for pickup-able by FrackMan, 2 for pickup-able by Protester
+    int m_ticks; // ticks undergone when pickup-able by FrackMan
+    bool m_isVisible;
     
 };
 

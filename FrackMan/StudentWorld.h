@@ -63,6 +63,8 @@ public:
     
     void setGold(int num) { m_gold = num; }
     
+    int getGold() { return m_gold; }
+    
     void changeGold(int num) { m_gold += num; }
     
     void changeOilLeft(int num) { m_oilLeft += num; }
@@ -88,6 +90,9 @@ public:
     
     Squirt* getSquirt(int num) { return m_squirts[num]; }
     
+    // GoldNugget
+    void addGoldNugget(GoldNugget* aGold) { m_golds.push_back(aGold); }
+    
 
 private:
     
@@ -102,6 +107,7 @@ private:
     std::vector<Boulder*> m_boulders;
     std::vector<Squirt*> m_squirts;
     std::vector<Barrel*> m_barrels;
+    std::vector<GoldNugget*> m_golds;
     
     
     //std::vector<Actor*> m_actors;

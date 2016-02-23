@@ -65,6 +65,32 @@ int StudentWorld::init()
     }
     
     
+    // Gold Nugget
+    temp1 = 5 - getLevel()/2; temp2 = 2;
+    int G = temp1 > temp2 ? temp1 : temp2;
+    
+    for (int i = 0; i < G; i++) {
+        int x = rand() % 64, y = rand() % 64;
+        
+        bool canConstruct = true;
+        if ((x >= 30 && x <= 33 && y >= 4 && y <=59) || y > 59) { // the random position is not inside a Dirt
+            canConstruct = false;
+        }
+        for (int i = 0; i < m_boulders.size(); i++) { // the random position collides with a Boulder
+            if (didCollide(x, y, m_boulders[i]->getX(), m_boulders[i]->getY())) {
+                canConstruct = false;
+                break;
+            }
+        }
+        if (!canConstruct) {
+            cerr << "Attempt to construct a Gold Nugget but the random position is not legal; try again." << endl;
+            i--;
+            continue;
+        }
+        
+        m_golds.push_back(new GoldNugget(this, x, y, 1));
+    }
+    
     setGameStatText(setDisplayText());
     
     return GWSTATUS_CONTINUE_GAME;
@@ -117,6 +143,17 @@ int StudentWorld::move()
         }
     }
     
+    // Gold Nugget
+    for (int i = 0; i < m_golds.size(); i++) {
+        m_golds[i]->doSomething();
+    }
+    
+    for (int i = 0; i < m_golds.size(); i++) {
+        if (!m_golds[i]->isAlive()) {
+            delete m_golds[i];
+            m_golds.erase(m_golds.begin() + i);
+        }
+    }
     
     // Player: check life
     if (m_HP == 0) {
@@ -156,6 +193,12 @@ void StudentWorld::cleanUp()
     for (int i = 0; i < m_barrels.size(); i++) {
         delete m_barrels[i];
         m_barrels.erase(m_barrels.begin()+i);
+    }
+    
+    // Gold Nugget
+    for (int i = 0; i < m_golds.size(); i++) {
+        delete m_golds[i];
+        m_golds.erase(m_golds.begin()+i);
     }
 }
 
