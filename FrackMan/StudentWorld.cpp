@@ -213,12 +213,19 @@ int StudentWorld::move()
         }
     }
     
-    for (int i = 0; i < m_waters.size(); i++) {
-        if (!m_waters[i]->isAlive()) {
-            delete m_waters[i];
-            m_waters.erase(m_waters.begin() + i);
+    
+    for (vector<Water*>::iterator it = m_waters.begin(); it != m_waters.end(); it++) {
+        if (!(*it)->isAlive()) {
+            delete (*it);
+            m_waters.erase(it);
         }
     }
+//    for (int i = 0; i < m_waters.size(); i++) {
+//        if (!m_waters[i]->isAlive()) {
+//            delete m_waters[i];
+//            m_waters.erase(m_waters.begin() + i);
+//        }
+//    }
     
     // Player: check life
     if (m_HP == 0) {
@@ -276,10 +283,14 @@ void StudentWorld::cleanUp()
     cerr << "After cleanUp, m_sonars.size() = " << m_sonars.size() << endl;
     
     // Water Pool
-    for (int i = 0; i < m_waters.size(); i++) {
-        delete m_waters[i];
-        m_waters.erase(m_waters.begin() + i);
+    for (vector<Water*>::iterator it = m_waters.begin(); it != m_waters.end(); it++) {
+        delete *it;
+        m_waters.erase(it);
     }
+//    for (int i = 0; i < m_waters.size(); i++) {
+//        delete m_waters[i];
+//        m_waters.erase(m_waters.begin() + i);
+//    }
     cerr << "After cleanUp, m_waters.size() = " << m_waters.size() << endl;
 }
 

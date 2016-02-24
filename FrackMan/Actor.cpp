@@ -519,11 +519,71 @@ void Water::doSomething() {
 }
 
 
+// *** Protester *** //
+
+Protester::Protester(StudentWorld* world, int imageID) : Actor(world, imageID, 60, 60, left, 1, 0), m_waitingTicks(  ) {
+    int temp1 = 0, temp2 = 3 - getWorld()->getLevel()/4;
+    m_waitingTicks = (temp1 > temp2) ? temp1 : temp2;
+    
+    temp1= 50; temp2 = 100 - getWorld()->getLevel()*10;
+    m_waitingTicksExtension = (temp1 > temp2) ? temp1 : temp2;
+    
+    m_ticks = 0; m_activeTicks = 0;
+    m_ticksAfterShout = 0; m_ticksAfterRotate = 0;
+    
+    m_isLeaving = false;
+    m_isStunned = false;
+    
+    m_moveInDir = 0;
+}
+
+Protester::~Protester() {
+    
+}
 
 
+bool Protester::addTick() {
+    m_ticks++;
+    
+    if ((!m_isStunned && m_ticks > m_waitingTicks) || (m_isStunned && m_ticks > m_waitingTicksExtension)) {
+        
+        m_ticks = 0;
+        m_activeTicks++;
+        m_ticksAfterShout++;
+        m_ticksAfterRotate++;
+        return true;
+        
+    }
+    return false;
+}
 
 
+// *** Regular Protester *** //
+RegularProtester::RegularProtester(StudentWorld* world) : Protester(world, IID_PROTESTER) {
+    setHP(5);
+}
 
+RegularProtester::~RegularProtester() {
+    
+}
+
+void RegularProtester::doSomething() {
+    
+}
+
+
+// *** Hardcore Protester *** //
+HardcoreProtester::HardcoreProtester(StudentWorld* world) : Protester(world, IID_HARD_CORE_PROTESTER) {
+    
+}
+
+HardcoreProtester::~HardcoreProtester() {
+    
+}
+
+void HardcoreProtester::doSomething() {
+    
+}
 
 
 

@@ -2,6 +2,8 @@
 #define ACTOR_H_
 
 #include "GraphObject.h"
+#include <string>
+#include <list>
 
 // Students:  Add code to this file, Actor.cpp, StudentWorld.h, and StudentWorld.cpp
 
@@ -17,11 +19,28 @@
  }
  */
 
+// *** Other classes and functions *** //
+
+class Coord
+{
+public:
+    Coord(int rr, int cc) : m_r(rr), m_c(cc) {}
+    int r() const { return m_r; }
+    int c() const { return m_c; }
+private:
+    int m_r;
+    int m_c;
+};
+
+
 double distance(int x1, int y1, int x2, int y2);
 
 bool didCollide(int x1, int y1, int x2, int y2);
 
 class StudentWorld;
+
+
+// *** Actors *** //
 
 class Actor : public GraphObject {
 public:
@@ -52,23 +71,48 @@ private:
 };
 
 
-class Protester {
+class Protester : public Actor {
 public:
-    virtual void receiveGold();
-    virtual void shout();
+    Protester(StudentWorld* world, int imageID);
+    virtual ~Protester();
+    virtual void doSomething() = 0;
+    
+    void setHP(int num) { m_HP = num; };
+    void changeHP(int num) { m_HP += num; };
+    
+    bool addTick(); // return if to move at this tick
+    
+    void leaveOilField();
+    void attackPlayerInSight();
+    
+    void updateMap();
     
 private:
-    int hit_points;
+    int m_HP;
+    int m_moveInDir; // number of squares to move in current direction
+    bool m_isLeaving; // state of leave-the-oil-field
     
-    int num_to_move_in_direction; // numSquaresToMoveInCurrentDirection
-    bool leavingOilField;
-    int moving_period;
-    int ticks; // total ticks undergone
+    int m_ticks; // temporary, to keep track of which tick to move
+    
+    int m_activeTicks; // ticks except the waiting ticks
+    int m_ticksAfterShout; // non-resting ticks undergone after last shout
+    int m_ticksAfterRotate; // non-resting ticks undergone after last rotation
+    
+    int m_waitingTicks; // CONST ticks of waiting before each move
+    int m_waitingTicksExtension; // CONST total ticks of waiting when stunned by Squirt
+    
+    bool m_isStunned;
+    
+    std::string m_map[64]; // contains Dirt and Boulder positions
+    std::list<Coord> m_pathToExit;
 };
 
 
 class RegularProtester : public Protester {
 public:
+    RegularProtester(StudentWorld* world);
+    virtual ~RegularProtester();
+    virtual void doSomething();
     
 private:
     
@@ -77,9 +121,14 @@ private:
 
 class HardcoreProtester : public Protester {
 public:
+    HardcoreProtester(StudentWorld* world);
+    virtual ~HardcoreProtester();
+    virtual void doSomething();
+    
     
 private:
-    
+    int m_M;
+    int m_ticksStaringGold;
 };
 
 
