@@ -198,6 +198,10 @@ void FrackMan::doSomething() {
     }
 }
 
+void FrackMan::getAnnoyed(int num) {
+    getWorld()->changeHP(-1 * num);
+}
+
 // *** Dirt *** //
 
 Dirt::Dirt(StudentWorld* world, int x, int y) : Actor(world, IID_DIRT, x, y, right, 0.25, 3) {
@@ -534,7 +538,7 @@ Protester::Protester(StudentWorld* world, int imageID) : Actor(world, imageID, 6
     m_isLeaving = false;
     m_isStunned = false;
     
-    m_moveInDir = 0;
+    m_moveInDir = rand() % 53 + 8; // 8 to 60 inclusive
 }
 
 Protester::~Protester() {
@@ -558,9 +562,44 @@ bool Protester::addTick() {
 }
 
 
+void Protester::updateMap() {
+    for (int i = 0; i < 64; i++) {
+        m_map[i] = "";
+        for (int j = 0; j < 64; j++)
+            m_map[i] += '.';
+    }
+    
+    for (int i = 0; i < 64; i++)
+        for (int j = 0; j < 64; j++) {
+            if (getWorld()->getDirt(i, j) != nullptr) {
+                m_map[i][j] = 'D';
+                continue;
+            }
+            
+            for (int k = 0; k < getWorld()->nBoulders(); k++)
+                if (distance(i, j, getWorld()->getBoulder(k)->getX(), getWorld()->getBoulder(k)->getY()) <= 3)
+                    m_map[i][j] = 'B';
+        }
+    
+}
+
+bool Protester::isEmptyPoint(int x, int y) {
+    if (x < 0 || y < 0)
+        return false;
+    
+    for (int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++) {
+            if (x + i >= 64 || y + j >= 64 || m_map[x+i][y+j] != '.')
+                return false;
+        }
+    
+    return true;
+}
+
 // *** Regular Protester *** //
 RegularProtester::RegularProtester(StudentWorld* world) : Protester(world, IID_PROTESTER) {
     setHP(5);
+    cerr << "A Regular Protester is added." << endl;
 }
 
 RegularProtester::~RegularProtester() {
@@ -568,13 +607,184 @@ RegularProtester::~RegularProtester() {
 }
 
 void RegularProtester::doSomething() {
+    if (!isAlive())
+        return;
+    if (!addTick()) // not an active tick
+        return;
+    
+    updateMap();
+    
+    int playerX = getWorld()->getPlayer()->getX();
+    int playerY = getWorld()->getPlayer()->getY();
+    
+    // check if to shout the FrackMan
+    if (distance(getX(), getY(), getWorld()->getPlayer()->getX(), getWorld()->getPlayer()->getY()) <= 4 && getTicksShout() > 15) {
+        
+        if ((getX() >= playerX && getY() >= playerY && (getDirection() == left || getDirection() == down)) ||
+            (getX() < playerX && getY() >= playerY && (getDirection() == right || getDirection() == down)) ||
+            (getX() < playerX && getY() < playerY && (getDirection() == right || getDirection() == up)) ||
+            (getX() >= playerX && getY() < playerY && (getDirection() == left || getDirection() == up))) {
+            // the Protester is facing the FrackMan's direction
+            
+            cerr << "The Regular Protester shouted to the player." << endl;
+            getWorld()->playSound(SOUND_PROTESTER_YELL);
+            getWorld()->getPlayer()->getAnnoyed(2);
+            resetTicksShout();
+        }
+    }
+    
+    // check if walk toward the FrackMan
+    bool canSeePlayer = false;
+    bool hasRotated = false;
+    
+    if ( ((getX() == playerX) || (getY() == playerY)) && distance(getX(), getY(), playerX, playerY) > 4 ) { // if it in the same line as the FrackMan
+        int maxX = getX() >= playerX ? getX() : playerX;
+        int minX = getX() < playerX ? getX() : playerX;
+        int maxY = getY() >= playerY ? getY() : playerY;
+        int minY = getY() < playerY ? getY() : playerY;
+        
+        bool noObstruct = true; // if it can directly walk to the FrackMan
+        for (int i = minX; i <= maxX; i++) {
+            for (int j = minY; j <= maxY; j++) {
+                if (getMap(i, j) != '.') {
+                    noObstruct = false;
+                    break;
+                }
+            }
+            if (!noObstruct)
+                break;
+        }
+        
+        if (noObstruct) {
+            canSeePlayer = true;
+            
+            if (playerX < getX()) {
+                setDirection(left);
+                moveTo(getX() - 1, getY());
+            } else if (playerX > getX()) {
+                setDirection(right);
+                moveTo(getX() + 1, getY());
+            } else if (playerY < getY()) {
+                setDirection(down);
+                moveTo(getX(), getY() - 1);
+            } else if (playerY > getY()) {
+                setDirection(up);
+                moveTo(getX(), getY() + 1);
+            }
+            
+            setMoveInDir(0);
+            return;
+        }
+        
+    } else if (!canSeePlayer) { // change to another direction that can move >= 1 step
+        changeMoveInDir(-1);
+        
+        if (getMoveInDir() <= 0) {
+            bool canMove = false; // can move in new direction
+            do {
+                int dir = rand() % 4;
+                if (dir == 0) {
+                    
+                    setDirection(left);
+                    if (getX() - 1 >= 0 && getMap(getX()-1, getY()) == '.') {
+                        canMove = true;
+//                        moveTo(getX()-1, getY());
+                    }
+                        
+                } else if (dir == 1) {
+                    
+                    setDirection(right);
+                    if (getX() + 1 < 64 && getMap(getX()+1, getY()) == '.') {
+                        canMove = true;
+//                        moveTo(getX()+1, getY());
+                    }
+                    
+                } else if (dir == 2) {
+                    
+                    setDirection(up);
+                    if (getY() + 1 < 64 && getMap(getX(), getY()+1) == '.') {
+                        canMove = true;
+//                        moveTo(getX(), getY()+1);
+                    }
+                    
+                } else if (dir == 3) {
+                    
+                    setDirection(down);
+                    if (getY() - 1 >= 0 && getMap(getX(), getY()-1) =='.') {
+                        canMove = true;
+//                        moveTo(getX(), getY()-1);
+                    }
+                    
+                }
+            } while (!canMove);
+            
+            int new_moveInDir = rand() % 53 + 8;
+            setMoveInDir(new_moveInDir);
+            
+            hasRotated = true;
+        }
+    } else if (!hasRotated && getTicksRotate() > 200) { // rotate in an intersection if possible
+        
+        vector<Direction> possibleDir;
+        if (getX() - 1 >= 0 && getMap(getX()-1, getY()) == '.')
+            possibleDir.push_back(left);
+        if (getX() + 1 < 64 && getMap(getX()+1, getY()) == '.')
+            possibleDir.push_back(right);
+        if (getY() - 1 >= 0 && getMap(getX(), getY()-1) == '.')
+            possibleDir.push_back(down);
+        if (getY() + 1 < 64 && getMap(getX(), getY()+1) == '.')
+            possibleDir.push_back(up);
+        
+        int pos = rand() % (possibleDir.size());
+        setDirection(possibleDir[pos]);
+        
+        int new_moveInDir = rand() % 53 + 8;
+        setMoveInDir(new_moveInDir);
+        
+        resetTicksRotate();
+        
+    }
+    
+    // try to move one step in current direction
+    bool isBlocked = false;
+    if (getDirection() == left) {
+        if (getX() - 1 >= 0 && getMap(getX()-1, getY()) == '.')
+            moveTo(getX() - 1, getY());
+        else
+            isBlocked = true;
+                   
+    } else if (getDirection() == right) {
+        if (getX() + 1 < 64 && getMap(getX()+1, getY()) == '.')
+            moveTo(getX() + 1, getY());
+        else
+            isBlocked = true;
+        
+    } else if (getDirection() == up) {
+        if (getY() + 1 < 64 && getMap(getX(), getY()+1) == '.')
+            moveTo(getX(), getY() + 1);
+        else
+            isBlocked = true;
+        
+    } else if (getDirection() == down) {
+        if (getY() -1 >= 0 && getMap(getX(), getY()-1) == '.')
+            moveTo(getX(), getY() - 1);
+        else
+            isBlocked = true;
+        
+    }
+    
+    if (isBlocked) {
+        setMoveInDir(0);
+        return;
+    }
+    
     
 }
 
 
 // *** Hardcore Protester *** //
 HardcoreProtester::HardcoreProtester(StudentWorld* world) : Protester(world, IID_HARD_CORE_PROTESTER) {
-    
+    cerr << "A Hardcore Protester is added." << endl;
 }
 
 HardcoreProtester::~HardcoreProtester() {

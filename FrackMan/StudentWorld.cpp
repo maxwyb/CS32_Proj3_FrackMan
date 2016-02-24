@@ -7,9 +7,20 @@ GameWorld* createStudentWorld(string assetDir)
 	return new StudentWorld(assetDir);
 }
 
+void StudentWorld::addAProtester() {
+    int temp1 = 90, temp2 = getLevel()*10 + 30;
+    int probOfHardcore = temp1 < temp2 ? temp1 : temp2;
+    int prob = rand() % probOfHardcore;
+    if (prob == 0) {
+        m_protesters.push_back(new HardcoreProtester(this));
+    } else {
+        m_protesters.push_back(new RegularProtester(this));
+    }
+}
 
 int StudentWorld::init()
 {
+    m_ticks = 0;
     m_player = new FrackMan(this);
     
     // Dirt
@@ -91,6 +102,9 @@ int StudentWorld::init()
         m_golds.push_back(new GoldNugget(this, x, y, 1));
     }
     
+    // Protester
+    addAProtester();
+    
     setGameStatText(setDisplayText());
     
     return GWSTATUS_CONTINUE_GAME;
@@ -102,6 +116,7 @@ int StudentWorld::move()
         return GWSTATUS_FINISHED_LEVEL;
     }
     
+    m_ticks++;
     setGameStatText(setDisplayText());
     
     // FrackMan
@@ -214,18 +229,42 @@ int StudentWorld::move()
     }
     
     
-    for (vector<Water*>::iterator it = m_waters.begin(); it != m_waters.end(); it++) {
-        if (!(*it)->isAlive()) {
-            delete (*it);
-            m_waters.erase(it);
-        }
-    }
-//    for (int i = 0; i < m_waters.size(); i++) {
-//        if (!m_waters[i]->isAlive()) {
-//            delete m_waters[i];
-//            m_waters.erase(m_waters.begin() + i);
+//    for (vector<Water*>::iterator it = m_waters.begin(); it != m_waters.end(); it++) {
+//        if (!(*it)->isAlive()) {
+//            delete (*it);
+//            m_waters.erase(it);
 //        }
 //    }
+    for (int i = 0; i < m_waters.size(); i++) {
+        if (!m_waters[i]->isAlive()) {
+            delete m_waters[i];
+            m_waters.erase(m_waters.begin() + i);
+        }
+    }
+    
+    // Protester
+    int temp1 = 25, temp2 = 200 - getLevel();
+    int T = temp1 > temp2 ? temp1 : temp2;
+    if (m_ticks > T) {
+        m_ticks = 0;
+        int temp3 = 15, temp4 = 2 + getLevel() * 1.5;
+        int P = temp3 < temp4 ? temp3 : temp4;
+        if (m_protesters.size() < P) { // add a Protester
+            addAProtester();
+        }
+    }
+    
+    for (int i = 0; i < m_protesters.size(); i++) {
+        m_protesters[i]->doSomething();
+    }
+    
+    for (int i = 0; i < m_protesters.size(); i++) {
+        if (!m_protesters[i]->isAlive()) {
+            delete m_protesters[i];
+            m_protesters.erase(m_protesters.begin() + i);
+        }
+    }
+    
     
     // Player: check life
     if (m_HP == 0) {
@@ -283,15 +322,21 @@ void StudentWorld::cleanUp()
     cerr << "After cleanUp, m_sonars.size() = " << m_sonars.size() << endl;
     
     // Water Pool
-    for (vector<Water*>::iterator it = m_waters.begin(); it != m_waters.end(); it++) {
-        delete *it;
-        m_waters.erase(it);
-    }
-//    for (int i = 0; i < m_waters.size(); i++) {
-//        delete m_waters[i];
-//        m_waters.erase(m_waters.begin() + i);
+//    for (vector<Water*>::iterator it = m_waters.begin(); it != m_waters.end(); it++) {
+//        delete *it;
+//        m_waters.erase(it);
 //    }
+    for (int i = 0; i < m_waters.size(); i++) {
+        delete m_waters[i];
+        m_waters.erase(m_waters.begin() + i);
+    }
     cerr << "After cleanUp, m_waters.size() = " << m_waters.size() << endl;
+    
+    // Protester
+    for (int i = 0; i < m_protesters.size(); i++) {
+        delete m_protesters[i];
+        m_protesters.erase(m_protesters.begin() + i);
+    }
 }
 
 string StudentWorld::setDisplayText() {

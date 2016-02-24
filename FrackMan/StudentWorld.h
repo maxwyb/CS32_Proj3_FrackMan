@@ -93,6 +93,9 @@ public:
     // GoldNugget
     void addGoldNugget(GoldNugget* aGold) { m_golds.push_back(aGold); }
     
+    // Protester
+    void addAProtester();
+    
 
 private:
     
@@ -103,6 +106,8 @@ private:
     
     int m_oilLeft; // remained barrels of oil
     
+    int m_ticks; // keep track of ticks after a Protester is added
+    
     Dirt* m_dirt[64][64];
     std::vector<Boulder*> m_boulders;
     std::vector<Squirt*> m_squirts;
@@ -110,6 +115,8 @@ private:
     std::vector<GoldNugget*> m_golds;
     std::vector<SonarKit*> m_sonars;
     std::vector<Water*> m_waters;
+    
+    std::vector<Protester*> m_protesters;
     
     
     //std::vector<Actor*> m_actors;

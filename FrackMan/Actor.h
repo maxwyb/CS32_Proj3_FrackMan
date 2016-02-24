@@ -80,12 +80,24 @@ public:
     void setHP(int num) { m_HP = num; };
     void changeHP(int num) { m_HP += num; };
     
+    int getMoveInDir() { return m_moveInDir; }
+    void setMoveInDir(int num) { m_moveInDir = num; }
+    void changeMoveInDir(int num) { m_moveInDir += num; }
+    
+    void resetTicksShout() { m_ticksAfterShout = 0; }
+    int getTicksShout() { return m_ticksAfterShout; }
+    void resetTicksRotate() { m_ticksAfterRotate = 0; }
+    int getTicksRotate() { return m_ticksAfterRotate; }
+    
+    
     bool addTick(); // return if to move at this tick
     
     void leaveOilField();
     void attackPlayerInSight();
     
     void updateMap();
+    char getMap(int x, int y) { return m_map[x][y]; }
+    bool isEmptyPoint(int x, int y);
     
 private:
     int m_HP;
