@@ -95,7 +95,8 @@ public:
     
     // Protester
     void addAProtester();
-    
+    int nProtesters() { return m_protesters.size(); }
+    Protester* getProtester(int num) { return m_protesters[num]; }
 
 private:
     

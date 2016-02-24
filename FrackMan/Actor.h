@@ -77,8 +77,12 @@ public:
     virtual ~Protester();
     virtual void doSomething() = 0;
     
+    int getHP() { return m_HP; }
     void setHP(int num) { m_HP = num; };
     void changeHP(int num) { m_HP += num; };
+    
+    bool isLeaving() { return m_isLeaving; }
+    void setLeaving() { m_isLeaving = true; }
     
     int getMoveInDir() { return m_moveInDir; }
     void setMoveInDir(int num) { m_moveInDir = num; }
@@ -89,15 +93,27 @@ public:
     void resetTicksRotate() { m_ticksAfterRotate = 0; }
     int getTicksRotate() { return m_ticksAfterRotate; }
     
-    
-    bool addTick(); // return if to move at this tick
-    
-    void leaveOilField();
-    void attackPlayerInSight();
+    int getWaitingTicksExtension() { return m_waitingTicksExtension; }
+    void setTicks(int num) { m_ticks = num; }
     
     void updateMap();
     char getMap(int x, int y) { return m_map[x][y]; }
     bool isEmptyPoint(int x, int y);
+    
+    // sub-functions for doSomething()
+    bool addTick(); // return true if to move at this tick
+    
+    void leaveOilField();
+    
+    bool shoutAtPlayer(); // return true if shouted
+    bool walkToPlayerInSight(); // return true if the FrackMan is in sight
+    bool decreaseMoveAndRotate(); // decrease m_moveInDir by 1; return true if it changes direction
+    bool rotateAtIntersection(); // return true if it can change moving direction in one point, and have done so
+    void moveInDir(); // move one step in current direction
+    
+    // get annoyed
+    void getAnnoyed(int actorType, int scrSquirt, int scrBoulder); // a general function to be called by derived classes
+    virtual void getAnnoyed(int actorType) = 0;
     
 private:
     int m_HP;
@@ -126,6 +142,8 @@ public:
     virtual ~RegularProtester();
     virtual void doSomething();
     
+    virtual void getAnnoyed(int actorType);
+    
 private:
     
 };
@@ -136,6 +154,8 @@ public:
     HardcoreProtester(StudentWorld* world);
     virtual ~HardcoreProtester();
     virtual void doSomething();
+    
+    virtual void getAnnoyed(int actorType);
     
     
 private:

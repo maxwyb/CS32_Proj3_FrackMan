@@ -79,7 +79,7 @@ void FrackMan::doSomething() {
     }
     
     // dig the Dirt
-    cerr << "Current X = " << getX() << " ; current Y = " << getY() << "." << endl;
+//    cerr << "Current X = " << getX() << " ; current Y = " << getY() << "." << endl;
     for (int i = getX(); i <= getX() + 3; i++) {
         for (int j = getY(); j <= getY() + 3; j++) {
             if (i < 64 && j < 64 && getWorld()->getDirt(i, j) != nullptr) {
@@ -267,6 +267,12 @@ void Boulder::doSomething() {
             setDead();
         }
         
+        for (int i = 0; i < getWorld()->nProtesters(); i++) { // collides with a Protester
+            if (distance(getX(), getY(), getWorld()->getProtester(i)->getX(), getWorld()->getProtester(i)->getY()) <= 3) {
+                getWorld()->getProtester(i)->getAnnoyed(2);
+            }
+        }
+        
         bool isObstructed = false;
         for (int i = 0; i < 4; i++) {
             if ((getY() - 1 >= 0 && getX() + i < 64 && getWorld()->getDirt(getX()+i, getY()-1) != nullptr) || getY() - 1 == 0)  { // runs into a Dirt or falls to bottom
@@ -373,6 +379,17 @@ void Squirt::doSomething() {
             return;
         }
     }
+    
+    // if it collides with a Protester
+    for (int i = 0; i < getWorld()->nProtesters(); i++) {
+        if (distance(getX(), getY(), getWorld()->getProtester(i)->getX(), getWorld()->getProtester(i)->getY()) <= 3) {
+            cerr << "A Squirt collided with a Protester." << endl;
+            getWorld()->getProtester(i)->getAnnoyed(1);
+            setDead();
+            return;
+        }
+    }
+    
     
     moveTo(wantMoveX, wantMoveY);
     m_steps++;
@@ -533,12 +550,13 @@ Protester::Protester(StudentWorld* world, int imageID) : Actor(world, imageID, 6
     m_waitingTicksExtension = (temp1 > temp2) ? temp1 : temp2;
     
     m_ticks = 0; m_activeTicks = 0;
-    m_ticksAfterShout = 0; m_ticksAfterRotate = 0;
+    m_ticksAfterShout = 15; m_ticksAfterRotate = 0;
     
     m_isLeaving = false;
     m_isStunned = false;
     
     m_moveInDir = rand() % 53 + 8; // 8 to 60 inclusive
+    cerr << "Constructed Protester with m_moveInDir = " << m_moveInDir << endl;
 }
 
 Protester::~Protester() {
@@ -555,6 +573,10 @@ bool Protester::addTick() {
         m_activeTicks++;
         m_ticksAfterShout++;
         m_ticksAfterRotate++;
+        
+        if (m_isStunned)
+            m_isStunned = false;
+        
         return true;
         
     }
@@ -572,7 +594,12 @@ void Protester::updateMap() {
     for (int i = 0; i < 64; i++)
         for (int j = 0; j < 64; j++) {
             if (getWorld()->getDirt(i, j) != nullptr) {
-                m_map[i][j] = 'D';
+                
+                for (int a = -3; a <= 0; a++)
+                    for (int b = -3; b <= 0; b++) {
+                        if (i+a >= 0 && j+b >= 0)
+                            m_map[i+a][j+b] = 'D';
+                    }
                 continue;
             }
             
@@ -581,43 +608,34 @@ void Protester::updateMap() {
                     m_map[i][j] = 'B';
         }
     
+    // Debug: print out the map
+//    for (int i = 0; i < 64; i++) {
+//        for (int j = 0; j < 64; j++)
+//            cerr << m_map[i][j];
+//        cerr << endl;
+//    }
+//    cerr << "------------------------" << endl;
+    
 }
 
 bool Protester::isEmptyPoint(int x, int y) {
-    if (x < 0 || y < 0)
+    if (x < 0 || y < 0 || x >= 64 || y >= 64 || m_map[x][y] != '.')
         return false;
     
-    for (int i = 0; i < 4; i++)
-        for (int j = 0; j < 4; j++) {
-            if (x + i >= 64 || y + j >= 64 || m_map[x+i][y+j] != '.')
-                return false;
-        }
+//    for (int i = 0; i < 4; i++)
+//        for (int j = 0; j < 4; j++) {
+//            if (x + i >= 64 || y + j >= 64 || m_map[x+i][y+j] != '.')
+//                return false;
+//        }
     
     return true;
 }
 
-// *** Regular Protester *** //
-RegularProtester::RegularProtester(StudentWorld* world) : Protester(world, IID_PROTESTER) {
-    setHP(5);
-    cerr << "A Regular Protester is added." << endl;
-}
-
-RegularProtester::~RegularProtester() {
-    
-}
-
-void RegularProtester::doSomething() {
-    if (!isAlive())
-        return;
-    if (!addTick()) // not an active tick
-        return;
-    
-    updateMap();
+bool Protester::shoutAtPlayer() {
     
     int playerX = getWorld()->getPlayer()->getX();
     int playerY = getWorld()->getPlayer()->getY();
     
-    // check if to shout the FrackMan
     if (distance(getX(), getY(), getWorld()->getPlayer()->getX(), getWorld()->getPlayer()->getY()) <= 4 && getTicksShout() > 15) {
         
         if ((getX() >= playerX && getY() >= playerY && (getDirection() == left || getDirection() == down)) ||
@@ -626,18 +644,25 @@ void RegularProtester::doSomething() {
             (getX() >= playerX && getY() < playerY && (getDirection() == left || getDirection() == up))) {
             // the Protester is facing the FrackMan's direction
             
-            cerr << "The Regular Protester shouted to the player." << endl;
+            cerr << "A Protester shouted to the player." << endl;
             getWorld()->playSound(SOUND_PROTESTER_YELL);
             getWorld()->getPlayer()->getAnnoyed(2);
             resetTicksShout();
+            
+            return true;
         }
     }
     
-    // check if walk toward the FrackMan
-    bool canSeePlayer = false;
-    bool hasRotated = false;
+    return false;
+}
+
+bool Protester::walkToPlayerInSight() {
     
-    if ( ((getX() == playerX) || (getY() == playerY)) && distance(getX(), getY(), playerX, playerY) > 4 ) { // if it in the same line as the FrackMan
+    bool canSeePlayer = false;
+    int playerX = getWorld()->getPlayer()->getX();
+    int playerY = getWorld()->getPlayer()->getY();
+    
+    if ( ((getX() == playerX) || (getY() == playerY)) && distance(getX(), getY(), playerX, playerY) > 4 ) { // if it is in the same line as the FrackMan
         int maxX = getX() >= playerX ? getX() : playerX;
         int minX = getX() < playerX ? getX() : playerX;
         int maxY = getY() >= playerY ? getY() : playerY;
@@ -646,7 +671,7 @@ void RegularProtester::doSomething() {
         bool noObstruct = true; // if it can directly walk to the FrackMan
         for (int i = minX; i <= maxX; i++) {
             for (int j = minY; j <= maxY; j++) {
-                if (getMap(i, j) != '.') {
+                if (!isEmptyPoint(i, j)) {
                     noObstruct = false;
                     break;
                 }
@@ -673,67 +698,81 @@ void RegularProtester::doSomething() {
             }
             
             setMoveInDir(0);
-            return;
         }
-        
-    } else if (!canSeePlayer) { // change to another direction that can move >= 1 step
-        changeMoveInDir(-1);
-        
-        if (getMoveInDir() <= 0) {
-            bool canMove = false; // can move in new direction
-            do {
-                int dir = rand() % 4;
-                if (dir == 0) {
-                    
-                    setDirection(left);
-                    if (getX() - 1 >= 0 && getMap(getX()-1, getY()) == '.') {
-                        canMove = true;
-//                        moveTo(getX()-1, getY());
-                    }
-                        
-                } else if (dir == 1) {
-                    
-                    setDirection(right);
-                    if (getX() + 1 < 64 && getMap(getX()+1, getY()) == '.') {
-                        canMove = true;
-//                        moveTo(getX()+1, getY());
-                    }
-                    
-                } else if (dir == 2) {
-                    
-                    setDirection(up);
-                    if (getY() + 1 < 64 && getMap(getX(), getY()+1) == '.') {
-                        canMove = true;
-//                        moveTo(getX(), getY()+1);
-                    }
-                    
-                } else if (dir == 3) {
-                    
-                    setDirection(down);
-                    if (getY() - 1 >= 0 && getMap(getX(), getY()-1) =='.') {
-                        canMove = true;
-//                        moveTo(getX(), getY()-1);
-                    }
-                    
+    }
+    
+    return canSeePlayer;
+
+}
+
+
+bool Protester::decreaseMoveAndRotate() {
+    
+    bool hasRotated = false;
+    
+    cerr << "decreaseMoveAndRotate(): m_moveInDir = " << m_moveInDir << endl;
+    changeMoveInDir(-1);
+    if (getMoveInDir() <= 0) {
+        bool canMove = false; // can move in new direction
+        do {
+            int dir = rand() % 4;
+            if (dir == 0) {
+                
+                setDirection(left);
+                if (getX() - 1 >= 0 && isEmptyPoint(getX()-1, getY())) {
+                    canMove = true;
                 }
-            } while (!canMove);
-            
-            int new_moveInDir = rand() % 53 + 8;
-            setMoveInDir(new_moveInDir);
-            
-            hasRotated = true;
-        }
-    } else if (!hasRotated && getTicksRotate() > 200) { // rotate in an intersection if possible
+                
+            } else if (dir == 1) {
+                
+                setDirection(right);
+                if (getX() + 1 < 64 && isEmptyPoint(getX()+1, getY())) {
+                    canMove = true;
+                }
+                
+            } else if (dir == 2) {
+                
+                setDirection(up);
+                if (getY() + 1 < 64 && isEmptyPoint(getX(), getY()+1)) {
+                    canMove = true;
+                }
+                
+            } else if (dir == 3) {
+                
+                setDirection(down);
+                if (getY() - 1 >= 0 && isEmptyPoint(getX(), getY()-1)) {
+                    canMove = true;
+                }
+                
+            }
+        } while (!canMove);
+        
+        int new_moveInDir = rand() % 53 + 8;
+        setMoveInDir(new_moveInDir);
+        
+        hasRotated = true;
+    }
+    
+    return hasRotated;
+    
+}
+
+bool Protester::rotateAtIntersection() {
+    cerr << "rotateAtIntersection(): m_ticksAfterRotate = " << getTicksRotate() << endl;
+    if (getTicksRotate() > 200) { // rotate in an intersection if possible
         
         vector<Direction> possibleDir;
-        if (getX() - 1 >= 0 && getMap(getX()-1, getY()) == '.')
+        if (getX() - 1 >= 0 && isEmptyPoint(getX()-1, getY()))
             possibleDir.push_back(left);
-        if (getX() + 1 < 64 && getMap(getX()+1, getY()) == '.')
+        if (getX() + 1 < 64 && isEmptyPoint(getX()+1, getY()))
             possibleDir.push_back(right);
-        if (getY() - 1 >= 0 && getMap(getX(), getY()-1) == '.')
+        if (getY() - 1 >= 0 && isEmptyPoint(getX(), getY()-1))
             possibleDir.push_back(down);
-        if (getY() + 1 < 64 && getMap(getX(), getY()+1) == '.')
+        if (getY() + 1 < 64 && isEmptyPoint(getX(), getY()+1))
             possibleDir.push_back(up);
+        
+        if (possibleDir.empty())
+            return false;
         
         int pos = rand() % (possibleDir.size());
         setDirection(possibleDir[pos]);
@@ -743,30 +782,35 @@ void RegularProtester::doSomething() {
         
         resetTicksRotate();
         
+        return true;
     }
+    return false;
+}
+
+void Protester::moveInDir() {
     
-    // try to move one step in current direction
     bool isBlocked = false;
+    
     if (getDirection() == left) {
-        if (getX() - 1 >= 0 && getMap(getX()-1, getY()) == '.')
+        if (getX() - 1 >= 0 && isEmptyPoint(getX()-1, getY()))
             moveTo(getX() - 1, getY());
         else
             isBlocked = true;
-                   
+        
     } else if (getDirection() == right) {
-        if (getX() + 1 < 64 && getMap(getX()+1, getY()) == '.')
+        if (getX() + 1 < 64 && isEmptyPoint(getX()+1, getY()))
             moveTo(getX() + 1, getY());
         else
             isBlocked = true;
         
     } else if (getDirection() == up) {
-        if (getY() + 1 < 64 && getMap(getX(), getY()+1) == '.')
+        if (getY() + 1 < 64 && isEmptyPoint(getX(), getY()+1))
             moveTo(getX(), getY() + 1);
         else
             isBlocked = true;
         
     } else if (getDirection() == down) {
-        if (getY() -1 >= 0 && getMap(getX(), getY()-1) == '.')
+        if (getY() -1 >= 0 && isEmptyPoint(getX(), getY()-1))
             moveTo(getX(), getY() - 1);
         else
             isBlocked = true;
@@ -775,10 +819,78 @@ void RegularProtester::doSomething() {
     
     if (isBlocked) {
         setMoveInDir(0);
+    }
+}
+
+
+void Protester::getAnnoyed(int actorType, int scrSquirt, int scrBoulder) {
+    cerr << "A Protester is annoyed by actorType = " << actorType << endl;
+    getWorld()->playSound(SOUND_PROTESTER_ANNOYED);
+    m_isStunned = true;
+    m_ticks = 0;
+    if (actorType == 1) {
+        m_HP -= 2;
+        cerr << "Its HP is reduced by 2 points; remaining HP = " << m_HP << endl;
+        getWorld()->increaseScore(scrSquirt);
+    }
+    else if (actorType == 2) {
+        m_HP -= 100;
+        cerr << "Its HP is reduced by 100 points; remaining HP = " << m_HP << endl;
+        getWorld()->increaseScore(scrBoulder);
+    }
+}
+
+void Protester::leaveOilField() {
+    
+}
+
+// *** Regular Protester *** //
+RegularProtester::RegularProtester(StudentWorld* world) : Protester(world, IID_PROTESTER) {
+    setHP(5);
+    cerr << "A Regular Protester is added." << endl;
+}
+
+RegularProtester::~RegularProtester() {
+    
+}
+
+void RegularProtester::doSomething() {
+    if (!isAlive())
         return;
+    if (getHP() <= 0 && !isLeaving()) {
+        cerr << "A Protester enters leaving state." << endl;
+        setLeaving();
+        getWorld()->playSound(SOUND_PROTESTER_GIVE_UP);
+        setTicks(getWaitingTicksExtension() + 1);
     }
     
+    if (!addTick()) // not an active tick
+        return;
     
+    updateMap();
+    
+    // check if to shout the FrackMan
+    shoutAtPlayer();
+    
+    // check if walk toward the FrackMan
+    bool canSeePlayer = walkToPlayerInSight();
+    if (canSeePlayer)
+        return;
+    
+    // decrease its moveInDir by 1, and change direction if its value < 0
+    bool hasRotated = decreaseMoveAndRotate();
+    
+    // change to another direction that can move >= 1 step
+    if (!hasRotated)
+        rotateAtIntersection();
+    
+    // try to move one step in current direction
+    moveInDir();
+    
+}
+
+void RegularProtester::getAnnoyed(int actorType) {
+    Protester::getAnnoyed(actorType, 100, 500);
 }
 
 
@@ -793,6 +905,10 @@ HardcoreProtester::~HardcoreProtester() {
 
 void HardcoreProtester::doSomething() {
     
+}
+
+void HardcoreProtester::getAnnoyed(int actorType) {
+    Protester::getAnnoyed(actorType, 250, 500);
 }
 
 
