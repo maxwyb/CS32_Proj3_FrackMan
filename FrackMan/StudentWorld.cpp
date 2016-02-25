@@ -333,10 +333,14 @@ void StudentWorld::cleanUp()
     cerr << "After cleanUp, m_waters.size() = " << m_waters.size() << endl;
     
     // Protester
-    for (int i = 0; i < m_protesters.size(); i++) {
-        delete m_protesters[i];
-        m_protesters.erase(m_protesters.begin() + i);
-    }
+//    for (int i = 0; i < m_protesters.size(); i++) {
+//        delete m_protesters[i];
+//        m_protesters.erase(m_protesters.begin() + i);
+//    }
+    for (vector<Protester*>::iterator it = m_protesters.begin(); it != m_protesters.end(); it++)
+        delete (*it);
+    m_protesters.clear();
+    cerr << "After cleanUp, m_protesters.size() = " << m_protesters.size() << endl;
 }
 
 string StudentWorld::setDisplayText() {

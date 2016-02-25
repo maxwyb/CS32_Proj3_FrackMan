@@ -1,6 +1,7 @@
 #include "Actor.h"
 #include "StudentWorld.h"
 #include <cmath>
+#include <queue>
 
 using namespace std;
 
@@ -20,6 +21,79 @@ bool didCollide(int x1, int y1, int x2, int y2) { // check if two 4*4 objects co
                 }
     return false;
 }
+
+
+list<Coord> getMazePath(string maze[], int sr, int sc, int er, int ec) {
+    const int nRows = 64, nCols = 64;
+    list<Coord> pop; // store all popped Coords in the search process
+    
+    queue<Coord> coordQueue;
+    Coord start(sr, sc);
+    coordQueue.push(start);
+    maze[sr][sc] = '0';
+    
+    while (!coordQueue.empty()) {
+        Coord current = coordQueue.front();
+        pop.push_front(current);
+        coordQueue.pop();
+        
+        if (current.r() == er && current.c() == ec) {
+            
+            // generate path from end-point to start-point
+            list<Coord> path;
+            for (list<Coord>::iterator it = pop.begin(); it != pop.end(); it++) {
+                if (path.empty()) {
+                    path.push_front(*it);
+                    continue;
+                }
+                
+                if (((*it).r() == path.front().r() && (*it).c() == path.front().c() + 1) ||
+                    ((*it).r() == path.front().r() && (*it).c() == path.front().c() - 1) ||
+                    ((*it).r() == path.front().r() + 1 && (*it).c() == path.front().c()) ||
+                    ((*it).r() == path.front().r() - 1 && (*it).c() == path.front().c())) {
+                    path.push_front(*it);
+                }
+            }
+//            // ..Debug..
+//            cerr << "non-member function: getMazePath() " << endl;
+//            for (list<Coord>::iterator it = path.begin(); it != path.end(); it++){
+//                cerr << "path: (" <<(*it).r() << ", " << (*it).c() << ")" << endl;
+//            }
+            
+            return path;
+        }
+        
+        // north
+        if (current.r() - 1 >= 0 && maze[current.r()-1][current.c()] == '.'){
+            Coord next(current.r()-1, current.c());
+            coordQueue.push(next);
+            maze[current.r()-1][current.c()] = '0';
+        }
+        // east
+        if (current.c() + 1 < nCols && maze[current.r()][current.c()+1] == '.') {
+            Coord next(current.r(), current.c()+1);
+            coordQueue.push(next);
+            maze[current.r()][current.c()+1] = '0';
+        }
+        // south
+        if (current.r() + 1 < nRows && maze[current.r()+1][current.c()] == '.') {
+            Coord next(current.r()+1, current.c());
+            coordQueue.push(next);
+            maze[current.r()+1][current.c()] = '0';
+        }
+        // west
+        if (current.c() - 1 >= 0 && maze[current.r()][current.c()-1] == '.') {
+            Coord next(current.r(), current.c()-1);
+            coordQueue.push(next);
+            maze[current.r()][current.c()-1] = '0';
+        }
+    }
+    
+    // no solution
+    list<Coord> empty;
+    return empty;
+}
+
 
 // *** Actor *** //
 
@@ -79,7 +153,7 @@ void FrackMan::doSomething() {
     }
     
     // dig the Dirt
-//    cerr << "Current X = " << getX() << " ; current Y = " << getY() << "." << endl;
+    cerr << "Current X = " << getX() << " ; current Y = " << getY() << "." << endl;
     for (int i = getX(); i <= getX() + 3; i++) {
         for (int j = getY(); j <= getY() + 3; j++) {
             if (i < 64 && j < 64 && getWorld()->getDirt(i, j) != nullptr) {
@@ -542,7 +616,7 @@ void Water::doSomething() {
 
 // *** Protester *** //
 
-Protester::Protester(StudentWorld* world, int imageID) : Actor(world, imageID, 60, 60, left, 1, 0), m_waitingTicks(  ) {
+Protester::Protester(StudentWorld* world, int imageID) : Actor(world, imageID, 60, 60, left, 1, 0) {
     int temp1 = 0, temp2 = 3 - getWorld()->getLevel()/4;
     m_waitingTicks = (temp1 > temp2) ? temp1 : temp2;
     
@@ -550,7 +624,7 @@ Protester::Protester(StudentWorld* world, int imageID) : Actor(world, imageID, 6
     m_waitingTicksExtension = (temp1 > temp2) ? temp1 : temp2;
     
     m_ticks = 0; m_activeTicks = 0;
-    m_ticksAfterShout = 15; m_ticksAfterRotate = 0;
+    m_ticksAfterShout = 15; m_ticksAfterRotate = 0; // Protester can shout just after construction
     
     m_isLeaving = false;
     m_isStunned = false;
@@ -578,7 +652,6 @@ bool Protester::addTick() {
             m_isStunned = false;
         
         return true;
-        
     }
     return false;
 }
@@ -595,7 +668,7 @@ void Protester::updateMap() {
         for (int j = 0; j < 64; j++) {
             if (getWorld()->getDirt(i, j) != nullptr) {
                 
-                for (int a = -3; a <= 0; a++)
+                for (int a = -3; a <= 0; a++) // a 4*4 Actor at following positions would collide with a Dirt
                     for (int b = -3; b <= 0; b++) {
                         if (i+a >= 0 && j+b >= 0)
                             m_map[i+a][j+b] = 'D';
@@ -603,7 +676,7 @@ void Protester::updateMap() {
                 continue;
             }
             
-            for (int k = 0; k < getWorld()->nBoulders(); k++)
+            for (int k = 0; k < getWorld()->nBoulders(); k++) // the current position is too close to an existing Boulder
                 if (distance(i, j, getWorld()->getBoulder(k)->getX(), getWorld()->getBoulder(k)->getY()) <= 3)
                     m_map[i][j] = 'B';
         }
@@ -627,7 +700,6 @@ bool Protester::isEmptyPoint(int x, int y) {
 //            if (x + i >= 64 || y + j >= 64 || m_map[x+i][y+j] != '.')
 //                return false;
 //        }
-    
     return true;
 }
 
@@ -636,7 +708,7 @@ bool Protester::shoutAtPlayer() {
     int playerX = getWorld()->getPlayer()->getX();
     int playerY = getWorld()->getPlayer()->getY();
     
-    if (distance(getX(), getY(), getWorld()->getPlayer()->getX(), getWorld()->getPlayer()->getY()) <= 4 && getTicksShout() > 15) {
+    if (distance(getX(), getY(), playerX, playerY) <= 4 && getTicksShout() > 15) {
         
         if ((getX() >= playerX && getY() >= playerY && (getDirection() == left || getDirection() == down)) ||
             (getX() < playerX && getY() >= playerY && (getDirection() == right || getDirection() == down)) ||
@@ -644,7 +716,7 @@ bool Protester::shoutAtPlayer() {
             (getX() >= playerX && getY() < playerY && (getDirection() == left || getDirection() == up))) {
             // the Protester is facing the FrackMan's direction
             
-            cerr << "A Protester shouted to the player." << endl;
+            cerr << "A Protester shouted at the player." << endl;
             getWorld()->playSound(SOUND_PROTESTER_YELL);
             getWorld()->getPlayer()->getAnnoyed(2);
             resetTicksShout();
@@ -702,7 +774,6 @@ bool Protester::walkToPlayerInSight() {
     }
     
     return canSeePlayer;
-
 }
 
 
@@ -710,8 +781,9 @@ bool Protester::decreaseMoveAndRotate() {
     
     bool hasRotated = false;
     
-    cerr << "decreaseMoveAndRotate(): m_moveInDir = " << m_moveInDir << endl;
     changeMoveInDir(-1);
+    cerr << "m_moveInDir = " << m_moveInDir << " in Protester::decreaseMoveAndRotate()." << endl;
+    
     if (getMoveInDir() <= 0) {
         bool canMove = false; // can move in new direction
         do {
@@ -758,7 +830,7 @@ bool Protester::decreaseMoveAndRotate() {
 }
 
 bool Protester::rotateAtIntersection() {
-    cerr << "rotateAtIntersection(): m_ticksAfterRotate = " << getTicksRotate() << endl;
+//    cerr << "rotateAtIntersection(): m_ticksAfterRotate = " << getTicksRotate() << endl;
     if (getTicksRotate() > 200) { // rotate in an intersection if possible
         
         vector<Direction> possibleDir;
@@ -824,24 +896,58 @@ void Protester::moveInDir() {
 
 
 void Protester::getAnnoyed(int actorType, int scrSquirt, int scrBoulder) {
-    cerr << "A Protester is annoyed by actorType = " << actorType << endl;
+    
     getWorld()->playSound(SOUND_PROTESTER_ANNOYED);
     m_isStunned = true;
     m_ticks = 0;
     if (actorType == 1) {
         m_HP -= 2;
-        cerr << "Its HP is reduced by 2 points; remaining HP = " << m_HP << endl;
+        cerr << "A Protester is annoyed by actorType = " << actorType << "; remaining HP = " << m_HP << endl;
         getWorld()->increaseScore(scrSquirt);
     }
     else if (actorType == 2) {
         m_HP -= 100;
-        cerr << "Its HP is reduced by 100 points; remaining HP = " << m_HP << endl;
+        cerr << "A Protester is annoyed by actorType = " << actorType << "; remaining HP = " << m_HP << endl;
         getWorld()->increaseScore(scrBoulder);
     }
 }
 
 void Protester::leaveOilField() {
+
+    if (m_pathToExit.empty()) { // generate a path to exit
+        list<Coord> path;
+        path = getMazePath(m_map, getX(), getY(), 60, 60);
+        
+        for (list<Coord>::iterator it = path.begin(); it != path.end(); it++) {
+            m_pathToExit.push_back(*it);
+        }
+        
+        cerr << "A path generated to exit for Protester: ";
+        for (list<Coord>::iterator it = m_pathToExit.begin(); it != m_pathToExit.end(); it++){
+            cerr << " -> (" <<(*it).r() << ", " << (*it).c() << ")";
+        }
+        cerr << endl;
+    }
+
     
+    int posX = m_pathToExit.front().r(), posY = m_pathToExit.front().c();
+    m_pathToExit.pop_front();
+    
+    if (posX == getX() - 1 && posY == getY())
+        setDirection(left);
+    else if (posX == getX() + 1 && posY == getY())
+        setDirection(right);
+    else if (posY == getY() - 1 && posX == getX())
+        setDirection(down);
+    else if (posY == getY() + 1 && posX == getX())
+        setDirection(up);
+    
+    moveTo(posX, posY);
+//    cerr << "Protestor moves to posX = " << posX << "; posY = " << posY << endl;
+    if (posX == 60 && posY == 60) {
+        setDead();
+        return;
+    }
 }
 
 // *** Regular Protester *** //
@@ -862,10 +968,16 @@ void RegularProtester::doSomething() {
         setLeaving();
         getWorld()->playSound(SOUND_PROTESTER_GIVE_UP);
         setTicks(getWaitingTicksExtension() + 1);
+        return;
     }
     
     if (!addTick()) // not an active tick
         return;
+    
+    if (isLeaving()) {
+        leaveOilField();
+        return;
+    }
     
     updateMap();
     
@@ -877,7 +989,7 @@ void RegularProtester::doSomething() {
     if (canSeePlayer)
         return;
     
-    // decrease its moveInDir by 1, and change direction if its value < 0
+    // decrease its moveInDir by 1, and change moving direction if its value <= 0
     bool hasRotated = decreaseMoveAndRotate();
     
     // change to another direction that can move >= 1 step

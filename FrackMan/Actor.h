@@ -84,6 +84,9 @@ public:
     bool isLeaving() { return m_isLeaving; }
     void setLeaving() { m_isLeaving = true; }
     
+    // tick-related functions
+    void setTicks(int num) { m_ticks = num; }
+    
     int getMoveInDir() { return m_moveInDir; }
     void setMoveInDir(int num) { m_moveInDir = num; }
     void changeMoveInDir(int num) { m_moveInDir += num; }
@@ -94,8 +97,8 @@ public:
     int getTicksRotate() { return m_ticksAfterRotate; }
     
     int getWaitingTicksExtension() { return m_waitingTicksExtension; }
-    void setTicks(int num) { m_ticks = num; }
     
+    // Map-related functions
     void updateMap();
     char getMap(int x, int y) { return m_map[x][y]; }
     bool isEmptyPoint(int x, int y);
@@ -108,10 +111,9 @@ public:
     bool shoutAtPlayer(); // return true if shouted
     bool walkToPlayerInSight(); // return true if the FrackMan is in sight
     bool decreaseMoveAndRotate(); // decrease m_moveInDir by 1; return true if it changes direction
-    bool rotateAtIntersection(); // return true if it can change moving direction in one point, and have done so
+    bool rotateAtIntersection(); // return true if it can, and do change moving direction at one point
     void moveInDir(); // move one step in current direction
     
-    // get annoyed
     void getAnnoyed(int actorType, int scrSquirt, int scrBoulder); // a general function to be called by derived classes
     virtual void getAnnoyed(int actorType) = 0;
     
