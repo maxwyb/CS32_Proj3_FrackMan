@@ -142,75 +142,75 @@ int StudentWorld::move()
     for (int i = 0; i < m_boulders.size(); i++)
         m_boulders[i]->doSomething();
     
-    for (vector<Boulder*>::iterator it = m_boulders.begin(); it != m_boulders.end(); it++) {
-        if (!(*it)->isAlive()) {
-            delete *it;
-            m_boulders.erase(it);
-        }
-    }
-//    for (int i = 0; i < m_boulders.size(); i++) {
-//        if (m_boulders[i]->isAlive() == false) {
-//            delete m_boulders[i];
-////            cerr << "Destructor of a Boulder called." << endl;
-//            m_boulders.erase(m_boulders.begin() + i);
+//    for (vector<Boulder*>::iterator it = m_boulders.begin(); it != m_boulders.end(); it++) {
+//        if (!(*it)->isAlive()) {
+//            delete *it;
+//            m_boulders.erase(it);
 //        }
 //    }
+    for (int i = 0; i < m_boulders.size(); i++) {
+        if (m_boulders[i]->isAlive() == false) {
+            delete m_boulders[i];
+//            cerr << "Destructor of a Boulder called." << endl;
+            m_boulders.erase(m_boulders.begin() + i);
+        }
+    }
     
     // Squirt
     for (int i = 0; i < m_squirts.size(); i++) {
         m_squirts[i]->doSomething();
     }
     
-    for (vector<Squirt*>::iterator it = m_squirts.begin(); it != m_squirts.end(); it++) {
-        if (!(*it)->isAlive()) {
-            delete *it;
-            m_squirts.erase(it);
-        }
-    }
-    
-//    for (int i = 0; i < m_squirts.size(); i++) {
-//        if (!m_squirts[i]->isAlive()) {
-//            delete m_squirts[i];
-//            m_squirts.erase(m_squirts.begin() + i);
+//    for (vector<Squirt*>::iterator it = m_squirts.begin(); it != m_squirts.end(); it++) {
+//        if (!(*it)->isAlive()) {
+//            delete *it;
+//            m_squirts.erase(it);
 //        }
 //    }
+    
+    for (int i = 0; i < m_squirts.size(); i++) {
+        if (!m_squirts[i]->isAlive()) {
+            delete m_squirts[i];
+            m_squirts.erase(m_squirts.begin() + i);
+        }
+    }
     
     // Barrel of oil
     for (int i = 0; i < m_barrels.size(); i++) {
         m_barrels[i]->doSomething();
     }
     
-    for (vector<Barrel*>::iterator it = m_barrels.begin(); it != m_barrels.end(); it++) {
-        if (!(*it)->isAlive()) {
-            delete *it;
-            m_barrels.erase(it);
-        }
-    }
-    
-//    for (int i = 0; i < m_barrels.size(); i++) {
-//        if (m_barrels[i]->isAlive() == false) {
-//            delete m_barrels[i];
-//            m_barrels.erase(m_barrels.begin() + i);
+//    for (vector<Barrel*>::iterator it = m_barrels.begin(); it != m_barrels.end(); it++) {
+//        if (!(*it)->isAlive()) {
+//            delete *it;
+//            m_barrels.erase(it);
 //        }
 //    }
+    
+    for (int i = 0; i < m_barrels.size(); i++) {
+        if (m_barrels[i]->isAlive() == false) {
+            delete m_barrels[i];
+            m_barrels.erase(m_barrels.begin() + i);
+        }
+    }
     
     // Gold Nugget
     for (int i = 0; i < m_golds.size(); i++) {
         m_golds[i]->doSomething();
     }
 
-    for (vector<GoldNugget*>::iterator it = m_golds.begin(); it != m_golds.end(); it++) {
-        if (!(*it)->isAlive()) {
-            delete *it;
-            m_golds.erase(it);
-        }
-    }
-//    for (int i = 0; i < m_golds.size(); i++) {
-//        if (!m_golds[i]->isAlive()) {
-//            delete m_golds[i];
-//            m_golds.erase(m_golds.begin() + i);
+//    for (vector<GoldNugget*>::iterator it = m_golds.begin(); it != m_golds.end(); it++) {
+//        if (!(*it)->isAlive()) {
+//            delete *it;
+//            m_golds.erase(it);
 //        }
 //    }
+    for (int i = 0; i < m_golds.size(); i++) {
+        if (!m_golds[i]->isAlive()) {
+            delete m_golds[i];
+            m_golds.erase(m_golds.begin() + i);
+        }
+    }
     
     // Sonar Kit and Water Pool: construct and doSomething
     int prob1 = rand() % (getLevel()*25 + 300);
@@ -270,33 +270,33 @@ int StudentWorld::move()
         m_waters[i]->doSomething();
     }
     
-//    for (int i = 0; i < m_sonars.size(); i++) {
-//        if (!m_sonars[i]->isAlive()) {
-//            delete m_sonars[i];
-//            m_sonars.erase(m_sonars.begin() + i);
-//        }
-//    }
-    
-    for (vector<SonarKit*>::iterator it = m_sonars.begin(); it != m_sonars.end(); it++) {
-        if (!(*it)->isAlive()) {
-            delete *it;
-            m_sonars.erase(it);
+    for (int i = 0; i < m_sonars.size(); i++) {
+        if (!m_sonars[i]->isAlive()) {
+            delete m_sonars[i];
+            m_sonars.erase(m_sonars.begin() + i);
         }
     }
     
-    for (vector<Water*>::iterator it = m_waters.begin(); it != m_waters.end(); it++) {
-        if (!(*it)->isAlive()) {
-            delete (*it);
-            m_waters.erase(it);
-        }
-    }
-    
-//    for (int i = 0; i < m_waters.size(); i++) {
-//        if (!m_waters[i]->isAlive()) {
-//            delete m_waters[i];
-//            m_waters.erase(m_waters.begin() + i);
+//    for (vector<SonarKit*>::iterator it = m_sonars.begin(); it != m_sonars.end(); it++) {
+//        if (!(*it)->isAlive()) {
+//            delete *it;
+//            m_sonars.erase(it);
 //        }
 //    }
+    
+//    for (vector<Water*>::iterator it = m_waters.begin(); it != m_waters.end(); it++) {
+//        if (!(*it)->isAlive()) {
+//            delete (*it);
+//            m_waters.erase(it);
+//        }
+//    }
+    
+    for (int i = 0; i < m_waters.size(); i++) {
+        if (!m_waters[i]->isAlive()) {
+            delete m_waters[i];
+            m_waters.erase(m_waters.begin() + i);
+        }
+    }
     
     // Protester
     int temp1 = 25, temp2 = 200 - getLevel();
@@ -314,18 +314,18 @@ int StudentWorld::move()
         m_protesters[i]->doSomething();
     }
     
-    for (vector<Protester*>::iterator it = m_protesters.begin(); it != m_protesters.end(); it++) {
-        if (!(*it)->isAlive()) {
-            delete *it;
-            m_protesters.erase(it);
-        }
-    }
-//    for (int i = 0; i < m_protesters.size(); i++) {
-//        if (!m_protesters[i]->isAlive()) {
-//            delete m_protesters[i];
-//            m_protesters.erase(m_protesters.begin() + i);
+//    for (vector<Protester*>::iterator it = m_protesters.begin(); it != m_protesters.end(); it++) {
+//        if (!(*it)->isAlive()) {
+//            delete *it;
+//            m_protesters.erase(it);
 //        }
 //    }
+    for (int i = 0; i < m_protesters.size(); i++) {
+        if (!m_protesters[i]->isAlive()) {
+            delete m_protesters[i];
+            m_protesters.erase(m_protesters.begin() + i);
+        }
+    }
     
     
     // Player: check life
