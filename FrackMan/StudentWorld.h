@@ -121,7 +121,6 @@ private:
     
     std::vector<Protester*> m_protesters;
     
-    
     //std::vector<Actor*> m_actors;
     FrackMan* m_player;
     

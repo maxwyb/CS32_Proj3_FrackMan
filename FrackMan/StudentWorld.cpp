@@ -42,8 +42,10 @@ int StudentWorld::init()
     cerr << "Number of Boulders this round = " << B << endl;
     
     for (int i = 0; i < B; i++) {
-        int x = rand() % 64, y = rand() % 64;
-        if ((y == 0 || x > 61 || y > 57) || (x >= 27 && x <= 33 && y>= 4 && y<=59)) { // at the bottom, out of Dirt's range or in the mineshaft
+        int x = rand() % 60, y = rand() % 60;
+//        if ((y == 0 || x > 61 || y > 57) || (x > 26 && x <= 33 && y>= 4 && y<=59)) {   // at the bottom, out of Dirt's range or in the mineshaft
+        if ((x > 26 && x <= 33 && y > 0 && y <= 56) || y > 56 || y == 0) {
+            // out of Dirt's range or at the bottom
             i--;
             continue;
         }
@@ -67,11 +69,25 @@ int StudentWorld::init()
     m_oilLeft = L;
     
     for (int i = 0; i < L; i++) {
-        int x = rand() % 64, y = rand() % 64;
-        if ((x >= 30 && x <= 33 && y >= 4 && y <=59) || y > 59) { // the random position is not inside a Dirt
+        int x = rand() % 60, y = rand() % 60;
+        
+        bool canConstruct = true;
+        
+        if ((x > 26 && x <= 33 && y > 0 && y <= 56) || y > 56) { // the random position is not inside a Dirt
+            canConstruct = false;
+        }
+        for (int i = 0; i < nBoulders(); i++) { // the random position collides with a Boulder
+            if (didCollide(x, y, m_boulders[i]->getX(), m_boulders[i]->getY())) {
+                canConstruct = false;
+                break;
+            }
+        }
+        
+        if (!canConstruct) {
             i--;
             continue;
         }
+        
         m_barrels.push_back(new Barrel(this, x, y));
     }
     
@@ -81,10 +97,10 @@ int StudentWorld::init()
     int G = temp1 > temp2 ? temp1 : temp2;
     
     for (int i = 0; i < G; i++) {
-        int x = rand() % 64, y = rand() % 64;
+        int x = rand() % 60, y = rand() % 60;
         
         bool canConstruct = true;
-        if ((x >= 30 && x <= 33 && y >= 4 && y <=59) || y > 59) { // the random position is not inside a Dirt
+        if ((x > 26 && x <= 33 && y > 0 && y <= 56) || y > 56) { // the random position is not inside a Dirt
             canConstruct = false;
         }
         for (int i = 0; i < m_boulders.size(); i++) { // the random position collides with a Boulder
@@ -126,49 +142,75 @@ int StudentWorld::move()
     for (int i = 0; i < m_boulders.size(); i++)
         m_boulders[i]->doSomething();
     
-    for (int i = 0; i < m_boulders.size(); i++) {
-        if (m_boulders[i]->isAlive() == false) {
-            delete m_boulders[i];
-            cerr << "Destructor of a Boulder called." << endl;
-            m_boulders.erase(m_boulders.begin() + i);
+    for (vector<Boulder*>::iterator it = m_boulders.begin(); it != m_boulders.end(); it++) {
+        if (!(*it)->isAlive()) {
+            delete *it;
+            m_boulders.erase(it);
         }
     }
+//    for (int i = 0; i < m_boulders.size(); i++) {
+//        if (m_boulders[i]->isAlive() == false) {
+//            delete m_boulders[i];
+////            cerr << "Destructor of a Boulder called." << endl;
+//            m_boulders.erase(m_boulders.begin() + i);
+//        }
+//    }
     
     // Squirt
     for (int i = 0; i < m_squirts.size(); i++) {
         m_squirts[i]->doSomething();
     }
     
-    for (int i = 0; i < m_squirts.size(); i++) {
-        if (!m_squirts[i]->isAlive()) {
-            delete m_squirts[i];
-            m_squirts.erase(m_squirts.begin() + i);
+    for (vector<Squirt*>::iterator it = m_squirts.begin(); it != m_squirts.end(); it++) {
+        if (!(*it)->isAlive()) {
+            delete *it;
+            m_squirts.erase(it);
         }
     }
+    
+//    for (int i = 0; i < m_squirts.size(); i++) {
+//        if (!m_squirts[i]->isAlive()) {
+//            delete m_squirts[i];
+//            m_squirts.erase(m_squirts.begin() + i);
+//        }
+//    }
     
     // Barrel of oil
     for (int i = 0; i < m_barrels.size(); i++) {
         m_barrels[i]->doSomething();
     }
     
-    for (int i = 0; i < m_barrels.size(); i++) {
-        if (m_barrels[i]->isAlive() == false) {
-            delete m_barrels[i];
-            m_barrels.erase(m_barrels.begin() + i);
+    for (vector<Barrel*>::iterator it = m_barrels.begin(); it != m_barrels.end(); it++) {
+        if (!(*it)->isAlive()) {
+            delete *it;
+            m_barrels.erase(it);
         }
     }
+    
+//    for (int i = 0; i < m_barrels.size(); i++) {
+//        if (m_barrels[i]->isAlive() == false) {
+//            delete m_barrels[i];
+//            m_barrels.erase(m_barrels.begin() + i);
+//        }
+//    }
     
     // Gold Nugget
     for (int i = 0; i < m_golds.size(); i++) {
         m_golds[i]->doSomething();
     }
-    
-    for (int i = 0; i < m_golds.size(); i++) {
-        if (!m_golds[i]->isAlive()) {
-            delete m_golds[i];
-            m_golds.erase(m_golds.begin() + i);
+
+    for (vector<GoldNugget*>::iterator it = m_golds.begin(); it != m_golds.end(); it++) {
+        if (!(*it)->isAlive()) {
+            delete *it;
+            m_golds.erase(it);
         }
     }
+//    for (int i = 0; i < m_golds.size(); i++) {
+//        if (!m_golds[i]->isAlive()) {
+//            delete m_golds[i];
+//            m_golds.erase(m_golds.begin() + i);
+//        }
+//    }
     
     // Sonar Kit and Water Pool: construct and doSomething
     int prob1 = rand() % (getLevel()*25 + 300);
@@ -185,10 +227,11 @@ int StudentWorld::move()
             cerr << "Constructing a Water Pool..." << endl;
             
             vector<int> emptyX, emptyY;
-            for (int i = 0; i < 61; i++) {
-                for (int j = 0; j < 61; j++) {
+            for (int i = 0; i <= 60; i++) {
+                for (int j = 0; j <= 60; j++) {
                     bool isEmpty = true; // the 4*4 grid at (i, j) is empty
-                    for (int a = 0; a < 4; a++) {
+                    
+                    for (int a = 0; a < 4; a++) { // a Dirt collides with a potential Water Pool
                         for (int b = 0; b < 4; b++) {
                             if (m_dirt[i+a][j+b] != nullptr) {
                                 isEmpty = false;
@@ -197,6 +240,12 @@ int StudentWorld::move()
                         }
                         if (!isEmpty)
                             break;
+                    }
+                    for (int i = 0; i < nBoulders(); i++) { // a Boulder collides with a potential Water Pool
+                        if (didCollide(i, j, getBoulder(i)->getX(), getBoulder(i)->getY())) {
+                            isEmpty = false;
+                            break;
+                        }
                     }
                     
                     if (isEmpty) {
@@ -221,26 +270,33 @@ int StudentWorld::move()
         m_waters[i]->doSomething();
     }
     
-    for (int i = 0; i < m_sonars.size(); i++) {
-        if (!m_sonars[i]->isAlive()) {
-            delete m_sonars[i];
-            m_sonars.erase(m_sonars.begin() + i);
-        }
-    }
-    
-    
-//    for (vector<Water*>::iterator it = m_waters.begin(); it != m_waters.end(); it++) {
-//        if (!(*it)->isAlive()) {
-//            delete (*it);
-//            m_waters.erase(it);
+//    for (int i = 0; i < m_sonars.size(); i++) {
+//        if (!m_sonars[i]->isAlive()) {
+//            delete m_sonars[i];
+//            m_sonars.erase(m_sonars.begin() + i);
 //        }
 //    }
-    for (int i = 0; i < m_waters.size(); i++) {
-        if (!m_waters[i]->isAlive()) {
-            delete m_waters[i];
-            m_waters.erase(m_waters.begin() + i);
+    
+    for (vector<SonarKit*>::iterator it = m_sonars.begin(); it != m_sonars.end(); it++) {
+        if (!(*it)->isAlive()) {
+            delete *it;
+            m_sonars.erase(it);
         }
     }
+    
+    for (vector<Water*>::iterator it = m_waters.begin(); it != m_waters.end(); it++) {
+        if (!(*it)->isAlive()) {
+            delete (*it);
+            m_waters.erase(it);
+        }
+    }
+    
+//    for (int i = 0; i < m_waters.size(); i++) {
+//        if (!m_waters[i]->isAlive()) {
+//            delete m_waters[i];
+//            m_waters.erase(m_waters.begin() + i);
+//        }
+//    }
     
     // Protester
     int temp1 = 25, temp2 = 200 - getLevel();
@@ -258,12 +314,18 @@ int StudentWorld::move()
         m_protesters[i]->doSomething();
     }
     
-    for (int i = 0; i < m_protesters.size(); i++) {
-        if (!m_protesters[i]->isAlive()) {
-            delete m_protesters[i];
-            m_protesters.erase(m_protesters.begin() + i);
+    for (vector<Protester*>::iterator it = m_protesters.begin(); it != m_protesters.end(); it++) {
+        if (!(*it)->isAlive()) {
+            delete *it;
+            m_protesters.erase(it);
         }
     }
+//    for (int i = 0; i < m_protesters.size(); i++) {
+//        if (!m_protesters[i]->isAlive()) {
+//            delete m_protesters[i];
+//            m_protesters.erase(m_protesters.begin() + i);
+//        }
+//    }
     
     
     // Player: check life
@@ -289,48 +351,70 @@ void StudentWorld::cleanUp()
     delete m_player;
     
     // Boulder
-    for (int i = 0; i < m_boulders.size(); i++) {
-        delete m_boulders[i];
-        m_boulders.erase(m_boulders.begin()+i);
-    }
+    for(vector<Boulder*>::iterator it = m_boulders.begin(); it != m_boulders.end(); it++)
+        delete (*it);
+    m_boulders.clear();
+    cerr << "After cleanUp by an iterator, m_boulders.size = " << m_boulders.size() << endl;
+    
+//    for (int i = 0; i < m_boulders.size(); i++) {
+//        delete m_boulders[i];
+//        m_boulders.erase(m_boulders.begin()+i);
+//    }
     
     // Squirt
-    for (int i = 0; i < m_squirts.size(); i++) {
-        delete m_squirts[i];
-        m_squirts.erase(m_squirts.begin()+i);
-    }
+    for (vector<Squirt*>::iterator it = m_squirts.begin(); it != m_squirts.end(); it++)
+        delete (*it);
+    m_squirts.clear();
+    
+//    for (int i = 0; i < m_squirts.size(); i++) {
+//        delete m_squirts[i];
+//        m_squirts.erase(m_squirts.begin()+i);
+//    }
     
     // Barrel
-    for (int i = 0; i < m_barrels.size(); i++) {
-        delete m_barrels[i];
-        m_barrels.erase(m_barrels.begin()+i);
-    }
+    for (vector<Barrel*>::iterator it = m_barrels.begin(); it != m_barrels.end(); it++)
+        delete (*it);
+    m_barrels.clear();
+    
+//    for (int i = 0; i < m_barrels.size(); i++) {
+//        delete m_barrels[i];
+//        m_barrels.erase(m_barrels.begin()+i);
+//    }
     
     // Gold Nugget
-    for (int i = 0; i < m_golds.size(); i++) {
-        delete m_golds[i];
-        m_golds.erase(m_golds.begin()+i);
-    }
+    for (vector<GoldNugget*>::iterator it = m_golds.begin(); it != m_golds.end(); it++)
+        delete (*it);
+    m_golds.clear();
+    
+//    for (int i = 0; i < m_golds.size(); i++) {
+//        delete m_golds[i];
+//        m_golds.erase(m_golds.begin()+i);
+//    }
     
     // Sonar Kit
-    cerr << "Before cleanUp, m_sonars.size() = " << m_sonars.size() << endl;
-    for (int i = 0; i < m_sonars.size(); i++) {
-        delete m_sonars[i];
-        cerr << "Now the ith object is deleted; i = " << i << endl;
-        m_sonars.erase(m_sonars.begin() + i);
-    }
-    cerr << "After cleanUp, m_sonars.size() = " << m_sonars.size() << endl;
+    for (vector<SonarKit*>::iterator it = m_sonars.begin(); it != m_sonars.end(); it++)
+        delete (*it);
+    m_sonars.clear();
+    
+//    cerr << "Before cleanUp, m_sonars.size() = " << m_sonars.size() << endl;
+//    for (int i = 0; i < m_sonars.size(); i++) {
+//        delete m_sonars[i];
+//        cerr << "Now the ith object is deleted; i = " << i << endl;
+//        m_sonars.erase(m_sonars.begin() + i);
+//    }
+//    cerr << "After cleanUp, m_sonars.size() = " << m_sonars.size() << endl;
     
     // Water Pool
-//    for (vector<Water*>::iterator it = m_waters.begin(); it != m_waters.end(); it++) {
-//        delete *it;
-//        m_waters.erase(it);
-//    }
-    for (int i = 0; i < m_waters.size(); i++) {
-        delete m_waters[i];
-        m_waters.erase(m_waters.begin() + i);
+    for (vector<Water*>::iterator it = m_waters.begin(); it != m_waters.end(); it++) {
+        delete (*it);
     }
-    cerr << "After cleanUp, m_waters.size() = " << m_waters.size() << endl;
+    m_waters.clear();
+    
+//    for (int i = 0; i < m_waters.size(); i++) {
+//        delete m_waters[i];
+//        m_waters.erase(m_waters.begin() + i);
+//    }
+//    cerr << "After cleanUp, m_waters.size() = " << m_waters.size() << endl;
     
     // Protester
 //    for (int i = 0; i < m_protesters.size(); i++) {

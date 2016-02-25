@@ -186,18 +186,18 @@ void FrackMan::doSomething() {
                 
                 // add a Squirt in proper direction, if possible
                 int squirtX = -1, squirtY = -1;
-                if (getDirection() == left && getX()-2 >= 0) {
-                    squirtX = getX() - 2;
+                if (getDirection() == left && getX()-4 >= 0) {
+                    squirtX = getX() - 4;
                     squirtY = getY();
-                } else if (getDirection() == right && getX()+2 < 64) {
-                    squirtX = getX() + 2;
+                } else if (getDirection() == right && getX()+4 <= 60) {
+                    squirtX = getX() + 4;
                     squirtY = getY();
-                } else if (getDirection() == up && getY()+2 < 64) {
+                } else if (getDirection() == up && getY()+4 <= 60) {
                     squirtX = getX();
-                    squirtY = getY() + 2;
-                } else if (getDirection() == down && getY()-2 >= 0) {
+                    squirtY = getY() + 4;
+                } else if (getDirection() == down && getY()-4 >= 0) {
                     squirtX = getX();
-                    squirtY = getY() - 2;
+                    squirtY = getY() - 4;
                 }
             
                 if (squirtX != -1 && squirtY != -1) {
@@ -221,7 +221,7 @@ void FrackMan::doSomething() {
             
             if (getDirection() != right)
                 setDirection(right);
-            else if (getX()+1 < 64) {
+            else if (getX()+1 <= 60) {
                 wantMoveX = getX() + 1;
                 wantMoveY = getY();
                 
@@ -232,7 +232,7 @@ void FrackMan::doSomething() {
             
             if (getDirection() != up)
                 setDirection(up);
-            else if (getY()+1 < 64) {
+            else if (getY()+1 <= 60) {
                 wantMoveX = getX();
                 wantMoveY = getY() + 1;
             }
@@ -401,7 +401,7 @@ void Squirt::doSomething() {
             break;
             
         case right:
-            if (getX() + 1 < 64) {
+            if (getX() + 1 <= 60) {
                 wantMoveX = getX() + 1;
                 wantMoveY = getY();
             } else {
@@ -411,7 +411,7 @@ void Squirt::doSomething() {
             break;
             
         case up:
-            if (getY() + 1 < 64) {
+            if (getY() + 1 <= 60) {
                 wantMoveX = getX();
                 wantMoveY = getY() + 1;
             } else {
@@ -798,14 +798,14 @@ bool Protester::decreaseMoveAndRotate() {
             } else if (dir == 1) {
                 
                 setDirection(right);
-                if (getX() + 1 < 64 && isEmptyPoint(getX()+1, getY())) {
+                if (getX() + 1 <= 60 && isEmptyPoint(getX()+1, getY())) {
                     canMove = true;
                 }
                 
             } else if (dir == 2) {
                 
                 setDirection(up);
-                if (getY() + 1 < 64 && isEmptyPoint(getX(), getY()+1)) {
+                if (getY() + 1 <= 60 && isEmptyPoint(getX(), getY()+1)) {
                     canMove = true;
                 }
                 
@@ -836,11 +836,11 @@ bool Protester::rotateAtIntersection() {
         vector<Direction> possibleDir;
         if (getX() - 1 >= 0 && isEmptyPoint(getX()-1, getY()))
             possibleDir.push_back(left);
-        if (getX() + 1 < 64 && isEmptyPoint(getX()+1, getY()))
+        if (getX() + 1 <= 60 && isEmptyPoint(getX()+1, getY()))
             possibleDir.push_back(right);
         if (getY() - 1 >= 0 && isEmptyPoint(getX(), getY()-1))
             possibleDir.push_back(down);
-        if (getY() + 1 < 64 && isEmptyPoint(getX(), getY()+1))
+        if (getY() + 1 <= 60 && isEmptyPoint(getX(), getY()+1))
             possibleDir.push_back(up);
         
         if (possibleDir.empty())
@@ -870,13 +870,13 @@ void Protester::moveInDir() {
             isBlocked = true;
         
     } else if (getDirection() == right) {
-        if (getX() + 1 < 64 && isEmptyPoint(getX()+1, getY()))
+        if (getX() + 1 <= 60 && isEmptyPoint(getX()+1, getY()))
             moveTo(getX() + 1, getY());
         else
             isBlocked = true;
         
     } else if (getDirection() == up) {
-        if (getY() + 1 < 64 && isEmptyPoint(getX(), getY()+1))
+        if (getY() + 1 <= 60 && isEmptyPoint(getX(), getY()+1))
             moveTo(getX(), getY() + 1);
         else
             isBlocked = true;
