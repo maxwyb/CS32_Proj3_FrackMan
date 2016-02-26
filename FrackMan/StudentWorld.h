@@ -57,6 +57,8 @@ public:
     
     void changeWater(int num) { m_water += num; }
     
+    int getSonar() { return m_sonar; }
+    
     void setSonar(int num) { m_sonar = num; }
     
     void changeSonar(int num) { m_sonar += num; }
@@ -92,6 +94,15 @@ public:
     
     // GoldNugget
     void addGoldNugget(GoldNugget* aGold) { m_golds.push_back(aGold); }
+    
+    int nGolds() { return m_golds.size(); }
+    
+    GoldNugget* getGoldNugget(int num) { return m_golds[num]; }
+    
+    // Barrel of Oil
+    int nBarrels() { return m_barrels.size(); }
+    
+    Barrel* getBarrel(int num) { return m_barrels[num]; }
     
     // Protester
     void addAProtester();

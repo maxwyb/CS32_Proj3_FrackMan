@@ -11,7 +11,9 @@ void StudentWorld::addAProtester() {
     int temp1 = 90, temp2 = getLevel()*10 + 30;
     int probOfHardcore = temp1 < temp2 ? temp1 : temp2;
     int prob = rand() % probOfHardcore;
-    if (prob == 0) {
+//    if (prob == 0) {
+    // *debugging statement*:
+    if (prob != 0) {
         m_protesters.push_back(new HardcoreProtester(this));
     } else {
         m_protesters.push_back(new RegularProtester(this));
@@ -44,11 +46,22 @@ int StudentWorld::init()
     for (int i = 0; i < B; i++) {
         int x = rand() % 60, y = rand() % 60;
 //        if ((y == 0 || x > 61 || y > 57) || (x > 26 && x <= 33 && y>= 4 && y<=59)) {   // at the bottom, out of Dirt's range or in the mineshaft
+        
+        bool canConstruct = true;
         if ((x > 26 && x <= 33 && y > 0 && y <= 56) || y > 56 || y == 0) {
             // out of Dirt's range or at the bottom
+            canConstruct = false;
+        }
+        for (int i = 0; i < nBoulders(); i++) {
+            if (didCollide(x, y, m_boulders[i]->getX(), m_boulders[i]->getY())) // collide with an existing Boulder
+                canConstruct = false;
+        }
+        if (!canConstruct) {
+            cerr << "Trying to add a Boulder but random position not legal; try again." << endl;
             i--;
             continue;
         }
+        
         m_boulders.push_back(new Boulder(this, x, y));
     }
     
@@ -129,6 +142,7 @@ int StudentWorld::init()
 int StudentWorld::move()
 {
     if (m_oilLeft == 0) {
+        cerr << "******** Continue to Next Level ********" << endl;
         return GWSTATUS_FINISHED_LEVEL;
     }
     

@@ -101,6 +101,7 @@ public:
     // Map-related functions
     void updateMap();
     char getMap(int x, int y) { return m_map[x][y]; }
+//    std::string* getEntireMap() { return m_map; }
     bool isEmptyPoint(int x, int y);
     
     // sub-functions for doSomething()
@@ -116,6 +117,9 @@ public:
     
     void getAnnoyed(int actorType, int scrSquirt, int scrBoulder); // a general function to be called by derived classes
     virtual void getAnnoyed(int actorType) = 0;
+    virtual void getBribed() = 0;
+    
+    void setBribed() { m_beingBribed = true; m_ticks = 0; }
     
 private:
     int m_HP;
@@ -132,6 +136,8 @@ private:
     int m_waitingTicksExtension; // CONST total ticks of waiting when stunned by Squirt
     
     bool m_isStunned;
+    bool m_beingBribed; // UNIQUE TO HARDCORE PROTESTERS, Regular Protesters' always false
+    int m_ticksStaringGold; // UNIQUE TO HARDCORE PROTESTERS
     
     std::string m_map[64]; // contains Dirt and Boulder positions
     std::list<Coord> m_pathToExit;
@@ -145,6 +151,7 @@ public:
     virtual void doSomething();
     
     virtual void getAnnoyed(int actorType);
+    virtual void getBribed();
     
 private:
     
@@ -157,12 +164,20 @@ public:
     virtual ~HardcoreProtester();
     virtual void doSomething();
     
+//    virtual bool addTick();
+    
+    void pursuePlayer();
+    
     virtual void getAnnoyed(int actorType);
+    virtual void getBribed();
     
     
 private:
     int m_M;
-    int m_ticksStaringGold;
+//    int m_ticksStaringGold;
+//    bool m_beingBirbed;
+    
+    std::list<Coord> m_pathToPlayer;
 };
 
 

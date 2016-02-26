@@ -159,10 +159,10 @@ void FrackMan::doSomething() {
             if (i < 64 && j < 64 && getWorld()->getDirt(i, j) != nullptr) {
                 getWorld()->getDirt(i, j)->destroy();
                 getWorld()->setDirt(nullptr, i, j);
+                getWorld()->playSound(SOUND_DIG);
             }
         }
     }
-    getWorld()->playSound(SOUND_DIG);
     
     int keyboard = 0;
     if (getWorld()->getKey(keyboard) == true) {
@@ -250,11 +250,40 @@ void FrackMan::doSomething() {
             //cerr << "DOWN arrow key pressed." << endl;
             
         } else if (keyboard == KEY_PRESS_TAB) {
+            
             if (getWorld()->getGold() > 0) {
                 GoldNugget* aGold = new GoldNugget(getWorld(), getX(), getY(), 2);
                 getWorld()->addGoldNugget(aGold);
                 getWorld()->changeGold(-1);
             }
+            
+        } else if (keyboard == 122) { // "Z" key
+            
+            cerr << "User pressed 'Z' key." << endl;
+            if (getWorld()->getSonar() > 0) {
+                getWorld()->changeSonar(-1);
+            
+                cerr << "Finding Gold Nugget close to FrackMan..." << endl;
+                for (int i = 0; i < getWorld()->nGolds(); i++) {
+                    cerr << "Gold Nugget i = " << i << ", distance = " << distance(getX(), getY(), getWorld()->getGoldNugget(i)->getX(), getWorld()->getGoldNugget(i)->getY()) << endl;
+                    if (distance(getX(), getY(), getWorld()->getGoldNugget(i)->getX(), getWorld()->getGoldNugget(i)->getY()) < 12) {
+                        getWorld()->getGoldNugget(i)->setVisible(true);
+                        cerr << "Found a Gold Nugget near; set it visible." << endl;
+                    }
+                }
+            
+                cerr << "Finding Barrels of Oil close to FrackMan..." << endl;
+                for (int i = 0; i < getWorld()->nBarrels(); i++) {
+                    cerr << "Barrel i = " << i << ", distance = " << distance(getX(), getY(), getWorld()->getBarrel(i)->getX(), getWorld()->getBarrel(i)->getY()) << endl;
+                    if (distance(getX(), getY(), getWorld()->getBarrel(i)->getX(), getWorld()->getBarrel(i)->getY()) < 12) {
+                        getWorld()->getBarrel(i)->setVisible(true);
+                        cerr << "Found a Barrel near; set it visible." << endl;
+                    }
+                }
+            }
+            
+        } else {
+            cerr << "User pressed key: keyboard = " << keyboard << endl;
         }
         
         // check if there is a Boulder on the desired-to-move position; if so, do not move
@@ -527,29 +556,40 @@ void GoldNugget::doSomething() {
     if (!isAlive())
         return;
     
-    if (m_pickup == 2) {
+    if (m_pickup == 2) { // pickup-able by Protesters
         m_ticks++;
         if (m_ticks >= 100) {
             setDead();
             return;
         }
-    }
+        
+        for (int i = 0; i < getWorld()->nProtesters(); i++) {
+            if (distance(getX(), getY(), getWorld()->getProtester(i)->getX(), getWorld()->getProtester(i)->getY()) <= 3) {
+                cerr << "A Gold Nugget is pick-up by a Protester." << endl;
+                getWorld()->getProtester(i)->getBribed();
+                setDead();
+                return;
+            }
+        }
+        
+    } else if (m_pickup == 1) { // pickup-able by FrackMan
     
-    if (!m_isVisible && distance(getX(), getY(), getWorld()->getPlayer()->getX(), getWorld()->getPlayer()->getY()) <= 4) {
+        if (!m_isVisible && distance(getX(), getY(), getWorld()->getPlayer()->getX(), getWorld()->getPlayer()->getY()) <= 4) {
         
-        cerr << "A Gold Nugget pickup-able by FrackMan is discovered." << endl;
-        setVisible(true);
-        m_isVisible = true;
-        return;
+            cerr << "A Gold Nugget pickup-able by FrackMan is discovered." << endl;
+            setVisible(true);
+            m_isVisible = true;
+            return;
         
-    } else if (m_pickup == 1 && distance(getX(), getY(), getWorld()->getPlayer()->getX(), getWorld()->getPlayer()->getY()) <= 3) {
+        } else if (distance(getX(), getY(), getWorld()->getPlayer()->getX(), getWorld()->getPlayer()->getY()) <= 3) {
         
-        cerr << "A Gold Nugget is picked-up by FrackMan." << endl;
-        setDead();
-        getWorld()->playSound(SOUND_GOT_GOODIE);
-        getWorld()->increaseScore(10);
-        getWorld()->changeGold(1);
-        
+            cerr << "A Gold Nugget is picked-up by FrackMan." << endl;
+            setDead();
+            getWorld()->playSound(SOUND_GOT_GOODIE);
+            getWorld()->increaseScore(10);
+            getWorld()->changeGold(1);
+            
+        }
     }
     
 }
@@ -628,6 +668,10 @@ Protester::Protester(StudentWorld* world, int imageID) : Actor(world, imageID, 6
     
     m_isLeaving = false;
     m_isStunned = false;
+    m_beingBribed = false;
+    
+    temp1 = 50, temp2 = 100 - getWorld()->getLevel()*10;
+    m_ticksStaringGold = temp1 > temp2 ? temp1 : temp2;
     
     m_moveInDir = rand() % 53 + 8; // 8 to 60 inclusive
     cerr << "Constructed Protester with m_moveInDir = " << m_moveInDir << endl;
@@ -641,7 +685,7 @@ Protester::~Protester() {
 bool Protester::addTick() {
     m_ticks++;
     
-    if ((!m_isStunned && m_ticks > m_waitingTicks) || (m_isStunned && m_ticks > m_waitingTicksExtension)) {
+    if ((!m_isStunned && !m_beingBribed && m_ticks > m_waitingTicks) || (m_isStunned && m_ticks > m_waitingTicksExtension) || (m_beingBribed && m_ticks > m_ticksStaringGold)) {
         
         m_ticks = 0;
         m_activeTicks++;
@@ -650,6 +694,8 @@ bool Protester::addTick() {
         
         if (m_isStunned)
             m_isStunned = false;
+        if (m_beingBribed)
+            m_beingBribed = false;
         
         return true;
     }
@@ -682,6 +728,7 @@ void Protester::updateMap() {
         }
     
     // Debug: print out the map
+//    cerr << "------------------------" << endl;
 //    for (int i = 0; i < 64; i++) {
 //        for (int j = 0; j < 64; j++)
 //            cerr << m_map[i][j];
@@ -912,7 +959,7 @@ void Protester::getAnnoyed(int actorType, int scrSquirt, int scrBoulder) {
     }
 }
 
-void Protester::leaveOilField() {
+void Protester::leaveOilField() { // move one step on the path of leaving oil field
 
     if (m_pathToExit.empty()) { // generate a path to exit
         list<Coord> path;
@@ -950,6 +997,7 @@ void Protester::leaveOilField() {
     }
 }
 
+
 // *** Regular Protester *** //
 RegularProtester::RegularProtester(StudentWorld* world) : Protester(world, IID_PROTESTER) {
     setHP(5);
@@ -961,6 +1009,7 @@ RegularProtester::~RegularProtester() {
 }
 
 void RegularProtester::doSomething() {
+    
     if (!isAlive())
         return;
     if (getHP() <= 0 && !isLeaving()) {
@@ -974,12 +1023,14 @@ void RegularProtester::doSomething() {
     if (!addTick()) // not an active tick
         return;
     
+    updateMap();
+    
     if (isLeaving()) {
         leaveOilField();
         return;
     }
     
-    updateMap();
+//    updateMap();
     
     // check if to shout the FrackMan
     shoutAtPlayer();
@@ -1005,9 +1056,20 @@ void RegularProtester::getAnnoyed(int actorType) {
     Protester::getAnnoyed(actorType, 100, 500);
 }
 
+void RegularProtester::getBribed() {
+    getWorld()->playSound(SOUND_PROTESTER_FOUND_GOLD);
+    getWorld()->increaseScore(25);
+    setLeaving();
+}
+
 
 // *** Hardcore Protester *** //
 HardcoreProtester::HardcoreProtester(StudentWorld* world) : Protester(world, IID_HARD_CORE_PROTESTER) {
+    setHP(20);
+    // *Debugging statement*:
+//    m_M = 16 + getWorld()->getLevel() * 2;
+    m_M = 200;
+    
     cerr << "A Hardcore Protester is added." << endl;
 }
 
@@ -1017,13 +1079,120 @@ HardcoreProtester::~HardcoreProtester() {
 
 void HardcoreProtester::doSomething() {
     
+    if (!isAlive())
+        return;
+    if (getHP() <= 0 && !isLeaving()) {
+        cerr << "A Protester enters leaving state." << endl;
+        setLeaving();
+        getWorld()->playSound(SOUND_PROTESTER_GIVE_UP);
+        setTicks(getWaitingTicksExtension() + 1);
+        return;
+    }
+    
+    if (!addTick()) // not an active tick
+        return;
+    
+    updateMap();
+    
+    if (isLeaving()) {
+        leaveOilField();
+        return;
+    }
+    
+//    updateMap();
+    
+    // check if to shout the FrackMan
+    shoutAtPlayer();
+    
+    // unique to Hardcore Protester: pursue the FrackMan if possible
+    if (distance(getX(), getY(), getWorld()->getPlayer()->getX(), getWorld()->getPlayer()->getY()) > 4) {
+        pursuePlayer();
+        return;
+    }
+    
+    // check if walk toward the FrackMan
+    bool canSeePlayer = walkToPlayerInSight();
+    if (canSeePlayer)
+        return;
+    
+    // decrease its moveInDir by 1, and change moving direction if its value <= 0
+    bool hasRotated = decreaseMoveAndRotate();
+    
+    // change to another direction that can move >= 1 step
+    if (!hasRotated)
+        rotateAtIntersection();
+    
+    // try to move one step in current direction
+    moveInDir();
 }
+
 
 void HardcoreProtester::getAnnoyed(int actorType) {
     Protester::getAnnoyed(actorType, 250, 500);
 }
 
+void HardcoreProtester::getBribed() {
+    cerr << "A Hardcore Protester is bribed." << endl;
+    getWorld()->playSound(SOUND_PROTESTER_FOUND_GOLD);
+    getWorld()->increaseScore(50);
+    setBribed();
+    return;
+}
 
+void HardcoreProtester::pursuePlayer() {
+    string m_map[64];
+    for (int i = 0; i < 64; i++) {
+        m_map[i] = "";
+        for (int j = 0; j < 64; j++)
+            m_map[i] += getMap(i, j);
+    }
+//    cerr << "pursuePlayer(): reading Map succeed." << endl;
+    
+    // Debug: print out map
+//    cerr << "-----------------" << endl;
+//    for (int i = 0; i < 64; i++) {
+//        for (int j = 0; j < 64; j++)
+//            cerr << m_map[i][j];
+//        cerr << endl;
+//    }
+//    cerr << endl;
+//    cerr << "-----------------" << endl;
+    
+    m_pathToPlayer = getMazePath(m_map, getX(), getY(), getWorld()->getPlayer()->getX(), getWorld()->getPlayer()->getY());
+    
+//    cerr << getX() << "; " << getY() << "; " << getWorld()->getPlayer()->getX() << "; " << getWorld()->getPlayer()->getY() << endl;
+    
+//    cerr << "pursuePlayer(): getMazePath to Player succeed." << endl;
+    cerr << "m_pathToPlayer() = " << m_pathToPlayer.size() << endl;
+    cerr << "A path generated to the FrackMan: ";
+    for (list<Coord>::iterator it = m_pathToPlayer.begin(); it != m_pathToPlayer.end(); it++){
+        cerr << " -> (" <<(*it).r() << ", " << (*it).c() << ")";
+    }
+    cerr << endl;
+    cerr << "Protester's current location: X = " << getX() << "; Y = " << getY() << endl;
+    cerr << "m_M = " << m_M << endl;
+    
+    if (m_pathToPlayer.size()-1 <= m_M) {
+        
+        cerr << "A Hardcore Protester begins to pursue the Frackman..." << endl;
+
+        m_pathToPlayer.pop_front(); // first element (starting position) not useful
+        
+        int posX = m_pathToPlayer.front().r(), posY = m_pathToPlayer.front().c();
+        m_pathToPlayer.pop_front();
+        
+        if (posX == getX() - 1 && posY == getY())
+            setDirection(left);
+        else if (posX == getX() + 1 && posY == getY())
+            setDirection(right);
+        else if (posY == getY() - 1 && posX == getX())
+            setDirection(down);
+        else if (posY == getY() + 1 && posX == getX())
+            setDirection(up);
+        
+        moveTo(posX, posY);
+    }
+}
 
 
 
