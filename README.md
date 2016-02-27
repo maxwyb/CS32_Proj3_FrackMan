@@ -16,8 +16,9 @@ An OpenGL-based video game implemented on C++, similar to Dig Dug.
 - Installation instructions: http://web.cs.ucla.edu/classes/winter16/cs32/Projects/3/spec.html
 - When running the program in Xcode you may get a message relating to Assets directory. Select File / Project Settings... and for Derived Data Location, select Project-relative Location.
 - Press Command + R to run the program again.
----
-A Simplified Chinese installation guide to my beloved parents:
+
+### A Simplified Chinese installation guide to my beloved parents
+
 - 访问 http://www.xquartz.org, 下载 XQuartz-2.7.8.dmg 并双击安装。安装后点击屏幕左上方 Apple 图标注销后重新登录。
 - 下载 https://distfiles.macports.org/MacPorts/MacPorts-2.3.4-10.10-Yosemite.pkg 并双击安装，此版本针对 OS X Yosemite.
 - 打开"终端"，输入命令<pre><code>sudo port install freeglut</code></pre>，之后按照提示输入管理员账户密码，回车键确认。
