@@ -84,13 +84,13 @@ public:
     bool isLeaving() { return m_isLeaving; }
     void setLeaving() { m_isLeaving = true; }
     
-    // tick-related functions
-    void setTicks(int num) { m_ticks = num; }
-    
     int getMoveInDir() { return m_moveInDir; }
     void setMoveInDir(int num) { m_moveInDir = num; }
     void changeMoveInDir(int num) { m_moveInDir += num; }
     
+    // tick-related functions
+    void setTicks(int num) { m_ticks = num; }
+
     void resetTicksShout() { m_ticksAfterShout = 0; }
     int getTicksShout() { return m_ticksAfterShout; }
     void resetTicksRotate() { m_ticksAfterRotate = 0; }
@@ -166,7 +166,7 @@ public:
     
 //    virtual bool addTick();
     
-    void pursuePlayer();
+    bool pursuePlayer(); // return true if it pursues the FrackMan this tick
     
     virtual void getAnnoyed(int actorType);
     virtual void getBribed();

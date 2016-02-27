@@ -1067,8 +1067,8 @@ void RegularProtester::getBribed() {
 HardcoreProtester::HardcoreProtester(StudentWorld* world) : Protester(world, IID_HARD_CORE_PROTESTER) {
     setHP(20);
     // *Debugging statement*:
-//    m_M = 16 + getWorld()->getLevel() * 2;
-    m_M = 200;
+    m_M = 16 + getWorld()->getLevel() * 2;
+//    m_M = 200;
     
     cerr << "A Hardcore Protester is added." << endl;
 }
@@ -1105,10 +1105,12 @@ void HardcoreProtester::doSomething() {
     shoutAtPlayer();
     
     // unique to Hardcore Protester: pursue the FrackMan if possible
+    bool pursuedPlayer = false;
     if (distance(getX(), getY(), getWorld()->getPlayer()->getX(), getWorld()->getPlayer()->getY()) > 4) {
-        pursuePlayer();
-        return;
+        pursuedPlayer = pursuePlayer();
     }
+    if (pursuedPlayer)
+        return;
     
     // check if walk toward the FrackMan
     bool canSeePlayer = walkToPlayerInSight();
@@ -1139,7 +1141,7 @@ void HardcoreProtester::getBribed() {
     return;
 }
 
-void HardcoreProtester::pursuePlayer() {
+bool HardcoreProtester::pursuePlayer() {
     string m_map[64];
     for (int i = 0; i < 64; i++) {
         m_map[i] = "";
@@ -1163,17 +1165,18 @@ void HardcoreProtester::pursuePlayer() {
 //    cerr << getX() << "; " << getY() << "; " << getWorld()->getPlayer()->getX() << "; " << getWorld()->getPlayer()->getY() << endl;
     
 //    cerr << "pursuePlayer(): getMazePath to Player succeed." << endl;
-    cerr << "m_pathToPlayer() = " << m_pathToPlayer.size() << endl;
-    cerr << "A path generated to the FrackMan: ";
-    for (list<Coord>::iterator it = m_pathToPlayer.begin(); it != m_pathToPlayer.end(); it++){
-        cerr << " -> (" <<(*it).r() << ", " << (*it).c() << ")";
-    }
-    cerr << endl;
+
     cerr << "Protester's current location: X = " << getX() << "; Y = " << getY() << endl;
     cerr << "m_M = " << m_M << endl;
     
     if (m_pathToPlayer.size()-1 <= m_M) {
         
+        cerr << "m_pathToPlayer() = " << m_pathToPlayer.size() << endl;
+        cerr << "A path generated to the FrackMan: ";
+        for (list<Coord>::iterator it = m_pathToPlayer.begin(); it != m_pathToPlayer.end(); it++){
+            cerr << " -> (" <<(*it).r() << ", " << (*it).c() << ")";
+        }
+        cerr << endl;
         cerr << "A Hardcore Protester begins to pursue the Frackman..." << endl;
 
         m_pathToPlayer.pop_front(); // first element (starting position) not useful
@@ -1191,7 +1194,9 @@ void HardcoreProtester::pursuePlayer() {
             setDirection(up);
         
         moveTo(posX, posY);
+        return true;
     }
+    return false;
 }
 
 

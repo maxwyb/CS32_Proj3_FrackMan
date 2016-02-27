@@ -11,9 +11,9 @@ void StudentWorld::addAProtester() {
     int temp1 = 90, temp2 = getLevel()*10 + 30;
     int probOfHardcore = temp1 < temp2 ? temp1 : temp2;
     int prob = rand() % probOfHardcore;
-//    if (prob == 0) {
+    if (prob == 0) {
     // *debugging statement*:
-    if (prob != 0) {
+//    if (prob != 0) {
         m_protesters.push_back(new HardcoreProtester(this));
     } else {
         m_protesters.push_back(new RegularProtester(this));
